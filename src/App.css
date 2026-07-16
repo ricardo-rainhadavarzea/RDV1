@@ -143,19 +143,46 @@ button {
   border-radius: 8px;
 }
 
-.link-botao {
-  background: none;
-  border: none;
-  color: #2563eb;
-  text-decoration: underline;
-  padding: 0;
-  margin-bottom: 16px;
+.linha-codigo-manual {
+  display: flex;
+  gap: 8px;
 }
 
-.busca-manual-header {
+.linha-codigo-manual input {
+  flex: 1;
+  font-size: 16px;
+  padding: 8px;
+}
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(11, 11, 11, 0.5);
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 80px;
+  z-index: 10;
+}
+
+.modal-busca-nome {
+  background: #fff;
+  border-radius: 8px;
+  padding: 16px;
+  width: 90%;
+  max-width: 480px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.modal-busca-nome input {
+  font-size: 16px;
+  padding: 8px;
+}
+
+.resultado-selecionado {
+  background: #eef2ff;
 }
 
 .lista-resultados {

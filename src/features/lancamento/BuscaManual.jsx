@@ -1,126 +1,202 @@
-import { useEffect, useState } from 'react'
-import { buscarProdutosPorNome } from './lancamentoApi'
+import { useEffect, useRef, useState } from 'react'
+import { buscarProdutoPorCodigo, buscarProdutosPorNome } from './lancamentoApi'
+import { padCodigo } from '../../lib/csvUtils'
 import { useDebounce } from '../../lib/useDebounce'
 
-/** Fallback sem código de barras: busca produto por nome, digita só o valor total em R$. */
+/**
+ * Lançamento manual, pra quando não tem código de barras (mais comum do que
+ * o esperado, segundo a equipe de loja). Fluxo: operador digita o código
+ * (que geralmente já sabe de cabeça) e informa a quantidade — não o valor,
+ * já que aqui não tem etiqueta de balança pra decodificar. Quando não sabe
+ * o código, tem uma busca por nome (igual a da BM) que preenche o código
+ * automaticamente.
+ */
 export default function BuscaManual({ onAdicionar }) {
-  const [aberto, setAberto] = useState(false)
-  const [termo, setTermo] = useState('')
-  const termoBuscado = useDebounce(termo, 300)
-  const [resultados, setResultados] = useState([])
-  const [selecionado, setSelecionado] = useState(null)
-  const [valorDigitado, setValorDigitado] = useState('')
+  const [codigo, setCodigo] = useState('')
+  const codigoBuscado = useDebounce(codigo, 250)
+  const [produto, setProduto] = useState(null)
+  const [buscando, setBuscando] = useState(false)
+  const [naoEncontrado, setNaoEncontrado] = useState(false)
+  const [quantidade, setQuantidade] = useState('')
   const [erro, setErro] = useState(null)
 
+  const [modalAberto, setModalAberto] = useState(false)
+  const [termoNome, setTermoNome] = useState('')
+  const termoNomeBuscado = useDebounce(termoNome, 300)
+  const [resultadosNome, setResultadosNome] = useState([])
+  const [indiceSelecionado, setIndiceSelecionado] = useState(0)
+
+  const inputCodigoRef = useRef(null)
+
   useEffect(() => {
-    if (!aberto || termoBuscado.trim() === '') {
-      setResultados([])
+    if (codigoBuscado.trim() === '') {
+      setProduto(null)
+      setNaoEncontrado(false)
       return
     }
     let ativo = true
-    buscarProdutosPorNome(termoBuscado).then((data) => {
-      if (ativo) setResultados(data)
+    setBuscando(true)
+    buscarProdutoPorCodigo(padCodigo(codigoBuscado.trim()))
+      .then((p) => {
+        if (!ativo) return
+        setProduto(p)
+        setNaoEncontrado(!p)
+      })
+      .finally(() => ativo && setBuscando(false))
+    return () => {
+      ativo = false
+    }
+  }, [codigoBuscado])
+
+  useEffect(() => {
+    if (!modalAberto || termoNomeBuscado.trim() === '') {
+      setResultadosNome([])
+      return
+    }
+    let ativo = true
+    buscarProdutosPorNome(termoNomeBuscado).then((data) => {
+      if (!ativo) return
+      setResultadosNome(data)
+      setIndiceSelecionado(0)
     })
     return () => {
       ativo = false
     }
-  }, [termoBuscado, aberto])
+  }, [termoNomeBuscado, modalAberto])
 
-  function escolherProduto(produto) {
-    setSelecionado(produto)
-    setResultados([])
-    setErro(null)
+  function abrirModal() {
+    setModalAberto(true)
+    setTermoNome('')
+    setResultadosNome([])
+    setIndiceSelecionado(0)
   }
 
-  function confirmarValor() {
-    const valor = parseFloat(valorDigitado.replace(',', '.'))
-    if (Number.isNaN(valor) || valor <= 0) {
-      setErro('Digite um valor válido.')
+  function selecionarResultado(p) {
+    setCodigo(p.codigo)
+    setModalAberto(false)
+  }
+
+  function handleTecladoModal(e) {
+    if (e.key === 'ArrowDown') {
+      e.preventDefault()
+      setIndiceSelecionado((i) => Math.min(i + 1, resultadosNome.length - 1))
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault()
+      setIndiceSelecionado((i) => Math.max(i - 1, 0))
+    } else if (e.key === 'Enter') {
+      e.preventDefault()
+      if (resultadosNome[indiceSelecionado]) selecionarResultado(resultadosNome[indiceSelecionado])
+    } else if (e.key === 'Escape') {
+      setModalAberto(false)
+    }
+  }
+
+  function confirmarAdicao() {
+    const qtd = parseFloat(quantidade.replace(',', '.'))
+    if (Number.isNaN(qtd) || qtd <= 0) {
+      setErro('Digite uma quantidade válida.')
       return
     }
-    if (!selecionado.preco_unitario || selecionado.preco_unitario <= 0) {
-      setErro('Esse produto não tem preço cadastrado — não dá pra calcular a quantidade automaticamente. Cadastre um preço em Gestão > Produtos antes de lançar.')
+    if (!produto.preco_unitario || produto.preco_unitario <= 0) {
+      setErro('Esse produto não tem preço cadastrado — não dá pra calcular o valor. Cadastre um preço em Gestão > Produtos.')
       return
     }
 
     onAdicionar({
-      codigo: selecionado.codigo,
-      nome: selecionado.nome,
-      unidade: selecionado.unidade,
-      quantidade: valor / selecionado.preco_unitario,
-      valor,
+      codigo: produto.codigo,
+      nome: produto.nome,
+      unidade: produto.unidade,
+      quantidade: qtd,
+      valor: Math.round(qtd * produto.preco_unitario * 100) / 100,
       origem: 'manual',
     })
 
-    setAberto(false)
-    setTermo('')
-    setSelecionado(null)
-    setValorDigitado('')
+    setCodigo('')
+    setProduto(null)
+    setQuantidade('')
     setErro(null)
-  }
-
-  if (!aberto) {
-    return (
-      <button className="link-botao" onClick={() => setAberto(true)}>
-        Não tem código de barras? Buscar produto manualmente
-      </button>
-    )
+    inputCodigoRef.current?.focus()
   }
 
   return (
     <div className="card busca-manual">
-      <div className="busca-manual-header">
-        <h3>Busca manual</h3>
-        <button
-          onClick={() => {
-            setAberto(false)
-            setSelecionado(null)
-            setTermo('')
-          }}
-        >
-          Fechar
-        </button>
+      <h3>Lançamento manual (sem código de barras)</h3>
+
+      <div className="campo">
+        <label>Código do produto</label>
+        <div className="linha-codigo-manual">
+          <input
+            ref={inputCodigoRef}
+            type="text"
+            value={codigo}
+            onChange={(e) => {
+              setCodigo(e.target.value)
+              setErro(null)
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && produto) {
+                e.preventDefault()
+                document.getElementById('campo-quantidade-manual')?.focus()
+              }
+            }}
+            placeholder="Digite o código..."
+          />
+          <button type="button" onClick={abrirModal}>
+            Buscar por nome
+          </button>
+        </div>
       </div>
 
-      {!selecionado && (
-        <>
-          <input
-            type="text"
-            placeholder="Nome do produto..."
-            value={termo}
-            onChange={(e) => setTermo(e.target.value)}
-            autoFocus
-          />
-          <ul className="lista-resultados">
-            {resultados.map((p) => (
-              <li key={p.codigo}>
-                <button onClick={() => escolherProduto(p)}>
-                  {p.nome} — {p.unidade} — R$ {p.preco_unitario.toFixed(2)}
-                </button>
-              </li>
-            ))}
-          </ul>
-        </>
-      )}
+      {buscando && <p>Buscando...</p>}
+      {naoEncontrado && !buscando && <p className="erro">Produto não encontrado.</p>}
 
-      {selecionado && (
+      {produto && (
         <div className="confirmacao-manual">
           <p>
-            <strong>{selecionado.nome}</strong> ({selecionado.unidade}, R$ {selecionado.preco_unitario.toFixed(2)})
+            <strong>{produto.nome}</strong> ({produto.unidade}, R$ {produto.preco_unitario.toFixed(2)})
           </p>
-          <label>Valor total em R$</label>
+          <label htmlFor="campo-quantidade-manual">Quantidade ({produto.unidade})</label>
           <input
+            id="campo-quantidade-manual"
             type="text"
             inputMode="decimal"
-            value={valorDigitado}
-            onChange={(e) => setValorDigitado(e.target.value)}
+            value={quantidade}
+            onChange={(e) => setQuantidade(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && confirmarAdicao()}
             autoFocus
-            onKeyDown={(e) => e.key === 'Enter' && confirmarValor()}
           />
           {erro && <p className="erro">{erro}</p>}
-          <div style={{ display: 'flex', gap: 8 }}>
-            <button onClick={confirmarValor}>Adicionar ao carrinho</button>
-            <button onClick={() => setSelecionado(null)}>Voltar</button>
+          <button onClick={confirmarAdicao}>Adicionar ao carrinho</button>
+        </div>
+      )}
+
+      {modalAberto && (
+        <div className="modal-overlay" onClick={() => setModalAberto(false)}>
+          <div className="modal-busca-nome" onClick={(e) => e.stopPropagation()}>
+            <label>Buscar produto por nome</label>
+            <input
+              type="text"
+              placeholder="Nome ou parte do nome..."
+              value={termoNome}
+              onChange={(e) => setTermoNome(e.target.value)}
+              onKeyDown={handleTecladoModal}
+              autoFocus
+            />
+            <ul className="lista-resultados">
+              {resultadosNome.map((p, i) => (
+                <li key={p.codigo}>
+                  <button
+                    className={i === indiceSelecionado ? 'resultado-selecionado' : ''}
+                    onClick={() => selecionarResultado(p)}
+                  >
+                    {p.nome} — {p.unidade} — R$ {p.preco_unitario.toFixed(2)}
+                  </button>
+                </li>
+              ))}
+            </ul>
+            <button type="button" onClick={() => setModalAberto(false)}>
+              Fechar (Esc)
+            </button>
           </div>
         </div>
       )}
