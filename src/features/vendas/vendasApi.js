@@ -44,7 +44,13 @@ export function parseRelatorioVendas(texto) {
     throw new Error('Não encontrei a linha de cabeçalho da tabela (Código;Produto;Quantidade;...).')
   }
 
-  const csvTabela = linhas.slice(indiceHeader).join('\n')
+  // O relatório termina com uma linha de resumo tipo "Registros: 517;;Total
+  // Quant: 3290,94;;..." que não é um produto — precisa parar antes dela,
+  // senão vira uma linha de venda fantasma.
+  let indiceFim = linhas.findIndex((l, i) => i > indiceHeader && /^registros\s*:/i.test(l.trim()))
+  if (indiceFim === -1) indiceFim = linhas.length
+
+  const csvTabela = linhas.slice(indiceHeader, indiceFim).join('\n')
   const parsed = Papa.parse(csvTabela, { header: true, skipEmptyLines: true })
   const headerMap = mapHeaders(parsed.meta.fields ?? [], HEADER_ALIASES)
 
