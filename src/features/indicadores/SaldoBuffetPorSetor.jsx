@@ -4,7 +4,7 @@ function formatarReal(valor) {
 
 export default function SaldoBuffetPorSetor({ resultado }) {
   return (
-    <div className="card">
+    <div className="card ranking-buffet">
       <h4>Saldo do Buffet por setor (Ida − Volta)</h4>
       <p className="campo-ajuda">O que foi pro buffet e não voltou — indica o que foi consumido de fato.</p>
 

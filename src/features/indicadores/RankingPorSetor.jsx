@@ -4,7 +4,7 @@ function formatarReal(valor) {
 
 export default function RankingPorSetor({ resultado }) {
   return (
-    <div className="card">
+    <div className="card ranking-desperdicio">
       <h4>Ranking de desperdício por setor</h4>
 
       {!resultado.temVendasDoPeriodo && (

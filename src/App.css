@@ -352,8 +352,13 @@ button {
   margin-top: -4px;
 }
 
-.botao-imprimir {
+.botoes-imprimir {
+  display: flex;
+  gap: 8px;
   margin-top: 8px;
+}
+
+.botao-imprimir {
   padding: 8px 16px;
   background: #2563eb;
   color: #fff;
@@ -380,7 +385,17 @@ button {
 
   .no-imprimir,
   .topbar,
-  .abas-gestao {
+  .abas-gestao,
+  .so-tela {
+    display: none !important;
+  }
+
+  /* cada botão de impressão mostra só a seção correspondente */
+  body[data-imprimir='desperdicio'] .ranking-buffet {
+    display: none !important;
+  }
+
+  body[data-imprimir='buffet'] .ranking-desperdicio {
     display: none !important;
   }
 

@@ -52,6 +52,19 @@ export default function IndicadoresPage() {
       .finally(() => setCarregando(false))
   }, [filtro, personalizado])
 
+  function imprimir(secao) {
+    document.body.dataset.imprimir = secao
+    window.print()
+  }
+
+  useEffect(() => {
+    function limparModoImpressao() {
+      delete document.body.dataset.imprimir
+    }
+    window.addEventListener('afterprint', limparModoImpressao)
+    return () => window.removeEventListener('afterprint', limparModoImpressao)
+  }, [])
+
   return (
     <div className="indicadores-page">
       <div className="cabecalho-impressao">
@@ -68,9 +81,14 @@ export default function IndicadoresPage() {
           personalizado={personalizado}
           onPersonalizadoChange={setPersonalizado}
         />
-        <button className="botao-imprimir" onClick={() => window.print()}>
-          Imprimir / Exportar PDF
-        </button>
+        <div className="botoes-imprimir">
+          <button className="botao-imprimir" onClick={() => imprimir('desperdicio')}>
+            Imprimir Ranking de Desperdício
+          </button>
+          <button className="botao-imprimir" onClick={() => imprimir('buffet')}>
+            Imprimir Saldo do Buffet
+          </button>
+        </div>
       </div>
 
       {erro && <p className="erro">{erro}</p>}
@@ -78,9 +96,11 @@ export default function IndicadoresPage() {
 
       {!carregando && (
         <>
-          <TotaisCards totais={totais} />
-          <div className="card">
-            <GraficoSemanal semanas={semanas} />
+          <div className="so-tela">
+            <TotaisCards totais={totais} />
+            <div className="card">
+              <GraficoSemanal semanas={semanas} />
+            </div>
           </div>
           <RankingPorSetor resultado={ranking} />
           <SaldoBuffetPorSetor resultado={saldoBuffet} />
