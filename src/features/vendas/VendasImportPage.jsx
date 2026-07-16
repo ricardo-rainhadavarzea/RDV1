@@ -7,7 +7,6 @@ function formatarData(iso) {
 }
 
 export default function VendasImportPage() {
-  const [arquivo, setArquivo] = useState(null)
   const [preview, setPreview] = useState(null)
   const [erro, setErro] = useState(null)
   const [progresso, setProgresso] = useState(null)
@@ -28,7 +27,6 @@ export default function VendasImportPage() {
   function handleArquivo(e) {
     const file = e.target.files?.[0]
     if (!file) return
-    setArquivo(file)
     setErro(null)
     setResultado(null)
     setPreview(null)
@@ -55,7 +53,6 @@ export default function VendasImportPage() {
       )
       setResultado({ total, periodoInicio: preview.periodoInicio, periodoFim: preview.periodoFim })
       setPreview(null)
-      setArquivo(null)
       carregarPeriodos()
     } catch (err) {
       setErro(err.message)

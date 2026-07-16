@@ -1,28 +1,30 @@
 import { useEffect, useState } from 'react'
 import { buscarProdutosPorNome } from './lancamentoApi'
+import { useDebounce } from '../../lib/useDebounce'
 
 /** Fallback sem código de barras: busca produto por nome, digita só o valor total em R$. */
 export default function BuscaManual({ onAdicionar }) {
   const [aberto, setAberto] = useState(false)
   const [termo, setTermo] = useState('')
+  const termoBuscado = useDebounce(termo, 300)
   const [resultados, setResultados] = useState([])
   const [selecionado, setSelecionado] = useState(null)
   const [valorDigitado, setValorDigitado] = useState('')
   const [erro, setErro] = useState(null)
 
   useEffect(() => {
-    if (!aberto || termo.trim() === '') {
+    if (!aberto || termoBuscado.trim() === '') {
       setResultados([])
       return
     }
     let ativo = true
-    buscarProdutosPorNome(termo).then((data) => {
+    buscarProdutosPorNome(termoBuscado).then((data) => {
       if (ativo) setResultados(data)
     })
     return () => {
       ativo = false
     }
-  }, [termo, aberto])
+  }, [termoBuscado, aberto])
 
   function escolherProduto(produto) {
     setSelecionado(produto)

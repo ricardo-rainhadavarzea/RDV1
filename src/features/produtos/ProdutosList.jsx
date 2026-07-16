@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react'
 import { buscarProdutos, atualizarProduto } from './produtosApi'
+import { useDebounce } from '../../lib/useDebounce'
 
 const TAMANHO_PAGINA = 50
 
 export default function ProdutosList({ refreshKey }) {
   const [termo, setTermo] = useState('')
+  const termoBuscado = useDebounce(termo, 300)
   const [pagina, setPagina] = useState(0)
   const [produtos, setProdutos] = useState([])
   const [total, setTotal] = useState(0)
@@ -15,7 +17,7 @@ export default function ProdutosList({ refreshKey }) {
   useEffect(() => {
     let ativo = true
     setCarregando(true)
-    buscarProdutos({ termo, pagina, tamanhoPagina: TAMANHO_PAGINA })
+    buscarProdutos({ termo: termoBuscado, pagina, tamanhoPagina: TAMANHO_PAGINA })
       .then(({ data, count }) => {
         if (!ativo) return
         setProdutos(data)
@@ -25,7 +27,7 @@ export default function ProdutosList({ refreshKey }) {
     return () => {
       ativo = false
     }
-  }, [termo, pagina, refreshKey])
+  }, [termoBuscado, pagina, refreshKey])
 
   function iniciarEdicao(produto) {
     setEditandoCodigo(produto.codigo)
