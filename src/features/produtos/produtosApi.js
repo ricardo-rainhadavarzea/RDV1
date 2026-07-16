@@ -2,22 +2,22 @@ import { supabase } from '../../lib/supabaseClient'
 
 const CHUNK_SIZE = 500
 
-/** Normaliza texto pra comparar cabeçalhos de CSV sem acento/maiúsculas. */
+/** Normaliza texto pra comparar cabeçalhos de CSV: sem acento, sem espaço/pontuação, minúsculo. */
 function normalizeHeader(h) {
   return h
     .normalize('NFD')
     .replace(/[̀-ͯ]/g, '')
-    .trim()
     .toLowerCase()
+    .replace(/[^a-z0-9]/g, '')
 }
 
 const HEADER_ALIASES = {
-  codigo: ['codigo', 'código', 'cod', 'cod. produto', 'codigo produto', 'codigo de barras'],
-  nome: ['nome', 'descricao', 'descrição', 'produto', 'nome do produto'],
-  unidade: ['unidade', 'un', 'und', 'unidade de medida'],
-  preco_unitario: ['preco_unitario', 'preco unitario', 'preço unitário', 'preco', 'preço', 'valor unitario', 'valor unitário'],
+  codigo: ['codigo', 'cod', 'codproduto', 'codigoproduto', 'codigodebarras'],
+  nome: ['nome', 'descricao', 'produto', 'nomedoproduto'],
+  unidade: ['unidade', 'un', 'und', 'unidadedemedida'],
+  preco_unitario: ['precounitario', 'preco', 'valorunitario', 'preco unitario'],
   grupo: ['grupo'],
-  secao: ['secao', 'seção', 'setor'],
+  secao: ['secao', 'setor'],
 }
 
 /** Dado o array de cabeçalhos do CSV, monta um mapa { campoInterno: cabecalhoOriginal } */
@@ -25,22 +25,42 @@ export function mapHeaders(rawHeaders) {
   const normalized = rawHeaders.map((h) => ({ raw: h, norm: normalizeHeader(h) }))
   const map = {}
   for (const [field, aliases] of Object.entries(HEADER_ALIASES)) {
-    const found = normalized.find((h) => aliases.includes(h.norm))
+    const aliasesNorm = aliases.map(normalizeHeader)
+    const found = normalized.find((h) => aliasesNorm.includes(h.norm))
     if (found) map[field] = found.raw
   }
   return map
 }
 
-/** Preenche o código com zeros à esquerda até 13 dígitos. */
+/**
+ * Preenche com zeros à esquerda até 13 dígitos, mas só quando o código é
+ * puramente numérico (é o caso das etiquetas de balança). Alguns produtos do
+ * cadastro (ex: linha "Floriterra") usam código alfanumérico como
+ * "00000000FT001" — esses são mantidos como estão, sem mexer nos caracteres,
+ * senão dois produtos diferentes colidiriam no mesmo código numérico.
+ */
 export function padCodigo(codigo) {
-  const digits = String(codigo).replace(/\D/g, '')
-  return digits.padStart(13, '0')
+  const raw = String(codigo).trim()
+  if (/^\d+$/.test(raw)) {
+    return raw.padStart(13, '0')
+  }
+  return raw
 }
 
+/**
+ * Aceita tanto formato brasileiro com milhar (1.234,56) quanto decimal
+ * simples com ponto (18.60), que é o que o export da BM usa.
+ */
 function parseBRNumber(value) {
   if (value == null || value === '') return 0
   if (typeof value === 'number') return value
-  const cleaned = String(value).replace(/\./g, '').replace(',', '.').replace(/[^\d.-]/g, '')
+  const raw = String(value).trim()
+  if (raw.includes(',')) {
+    const cleaned = raw.replace(/\./g, '').replace(',', '.').replace(/[^\d.-]/g, '')
+    const n = parseFloat(cleaned)
+    return Number.isNaN(n) ? 0 : n
+  }
+  const cleaned = raw.replace(/[^\d.-]/g, '')
   const n = parseFloat(cleaned)
   return Number.isNaN(n) ? 0 : n
 }
