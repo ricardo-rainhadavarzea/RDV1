@@ -2,6 +2,7 @@ import { useState } from 'react'
 import ProdutosPage from './features/produtos/ProdutosPage'
 import CarrinhoPage from './features/lancamento/CarrinhoPage'
 import VendasImportPage from './features/vendas/VendasImportPage'
+import IndicadoresPage from './features/indicadores/IndicadoresPage'
 import './App.css'
 
 const SENHA_GESTAO = import.meta.env.VITE_GESTAO_SENHA || 'rainha123'
@@ -11,12 +12,13 @@ function TelaOperacao() {
 }
 
 const ABAS_GESTAO = [
+  { value: 'indicadores', label: 'Indicadores' },
   { value: 'produtos', label: 'Produtos' },
   { value: 'vendas', label: 'Vendas Semanais' },
 ]
 
 function TelaGestao() {
-  const [aba, setAba] = useState('produtos')
+  const [aba, setAba] = useState('indicadores')
 
   return (
     <div>
@@ -32,6 +34,7 @@ function TelaGestao() {
           </button>
         ))}
       </nav>
+      {aba === 'indicadores' && <IndicadoresPage />}
       {aba === 'produtos' && <ProdutosPage />}
       {aba === 'vendas' && <VendasImportPage />}
     </div>
