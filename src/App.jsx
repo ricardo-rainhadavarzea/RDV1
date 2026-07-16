@@ -86,7 +86,10 @@ function App() {
   return (
     <div className="app-shell">
       <header className="topbar">
-        <h1>Rainha da Várzea — Indicadores</h1>
+        <div className="titulo-app">
+          <h1>Rainha da Várzea</h1>
+          <p>Lançamentos de desperdício, transferência para buffet e consumo interno de produtos.</p>
+        </div>
         {view === 'gestao' ? (
           <button onClick={() => setView('operacao')}>Voltar pra Operação</button>
         ) : (

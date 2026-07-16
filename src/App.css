@@ -11,6 +11,17 @@
   margin-bottom: 16px;
 }
 
+.titulo-app h1 {
+  margin: 0;
+  font-size: 28px;
+}
+
+.titulo-app p {
+  margin: 2px 0 0;
+  font-size: 13px;
+  color: #52514e;
+}
+
 .card {
   background: var(--card-bg, #fff);
   border: 1px solid #ddd;
