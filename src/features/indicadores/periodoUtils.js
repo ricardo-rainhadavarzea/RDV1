@@ -101,3 +101,15 @@ export function formatarDataBR(date) {
   const d = new Date(date)
   return d.toLocaleDateString('pt-BR')
 }
+
+/** Descrição legível do período pra exibir no relatório (tela e impressão). */
+export function descreverPeriodo(filtro, inicio, fimExclusivo) {
+  const ultimoDia = new Date(fimExclusivo)
+  ultimoDia.setDate(ultimoDia.getDate() - 1)
+  const label = OPCOES_PERIODO.find((o) => o.value === filtro)?.label ?? ''
+  const intervalo =
+    formatarDataBR(inicio) === formatarDataBR(ultimoDia)
+      ? formatarDataBR(inicio)
+      : `${formatarDataBR(inicio)} a ${formatarDataBR(ultimoDia)}`
+  return `${label} (${intervalo})`
+}

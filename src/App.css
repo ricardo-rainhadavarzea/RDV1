@@ -351,3 +351,88 @@ button {
   color: #898781;
   margin-top: -4px;
 }
+
+.botao-imprimir {
+  margin-top: 8px;
+  padding: 8px 16px;
+  background: #2563eb;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+}
+
+.cabecalho-impressao {
+  display: none;
+}
+
+/* ---------- Impressão (A4) ---------- */
+
+@media print {
+  @page {
+    size: A4;
+    margin: 16mm;
+  }
+
+  body {
+    background: #fff;
+  }
+
+  .no-imprimir,
+  .topbar,
+  .abas-gestao {
+    display: none !important;
+  }
+
+  .cabecalho-impressao {
+    display: block;
+    margin-bottom: 16px;
+  }
+
+  .cabecalho-impressao h2 {
+    margin: 0 0 4px;
+  }
+
+  .cabecalho-impressao p {
+    margin: 0;
+    color: #52514e;
+    font-size: 13px;
+  }
+
+  .app-shell {
+    max-width: none;
+    padding: 0;
+  }
+
+  .card {
+    border: none;
+    box-shadow: none;
+    padding: 0;
+    margin-bottom: 12px;
+  }
+
+  .stat-tile {
+    border: 1px solid #ccc;
+  }
+
+  .setor-bloco {
+    break-inside: avoid;
+  }
+
+  table {
+    font-size: 12px;
+  }
+
+  th,
+  td {
+    padding: 4px 6px;
+  }
+
+  .grafico-tooltip {
+    display: none;
+  }
+
+  a[href]::after {
+    content: '';
+  }
+}

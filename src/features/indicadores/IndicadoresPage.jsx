@@ -4,7 +4,7 @@ import TotaisCards from './TotaisCards'
 import GraficoSemanal from './GraficoSemanal'
 import RankingPorSetor from './RankingPorSetor'
 import SaldoBuffetPorSetor from './SaldoBuffetPorSetor'
-import { calcularPeriodo, formatarISO } from './periodoUtils'
+import { calcularPeriodo, formatarISO, descreverPeriodo } from './periodoUtils'
 import {
   buscarTotaisPeriodo,
   buscarRankingPorSetor,
@@ -29,9 +29,11 @@ export default function IndicadoresPage() {
   const [semanas, setSemanas] = useState([])
   const [carregando, setCarregando] = useState(false)
   const [erro, setErro] = useState(null)
+  const [periodoTexto, setPeriodoTexto] = useState('')
 
   useEffect(() => {
     const { inicio, fim } = calcularPeriodo(filtro, personalizado)
+    setPeriodoTexto(descreverPeriodo(filtro, inicio, fim))
     setCarregando(true)
     setErro(null)
     Promise.all([
@@ -52,12 +54,24 @@ export default function IndicadoresPage() {
 
   return (
     <div className="indicadores-page">
-      <PeriodoFiltro
-        filtro={filtro}
-        onFiltroChange={setFiltro}
-        personalizado={personalizado}
-        onPersonalizadoChange={setPersonalizado}
-      />
+      <div className="cabecalho-impressao">
+        <h2>Rainha da Várzea — Indicadores</h2>
+        <p>
+          Período: {periodoTexto} · Gerado em {new Date().toLocaleString('pt-BR')}
+        </p>
+      </div>
+
+      <div className="no-imprimir">
+        <PeriodoFiltro
+          filtro={filtro}
+          onFiltroChange={setFiltro}
+          personalizado={personalizado}
+          onPersonalizadoChange={setPersonalizado}
+        />
+        <button className="botao-imprimir" onClick={() => window.print()}>
+          Imprimir / Exportar PDF
+        </button>
+      </div>
 
       {erro && <p className="erro">{erro}</p>}
       {carregando && <p>Carregando...</p>}
