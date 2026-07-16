@@ -71,6 +71,22 @@ export default function BuscaManual({ onAdicionar }) {
     setIndiceSelecionado(0)
   }
 
+  // Atalho F3 abre a busca por nome, de qualquer lugar da tela — igual ao
+  // costume da equipe com a BM.
+  useEffect(() => {
+    function handleAtalhoGlobal(e) {
+      if (e.key === 'F3') {
+        e.preventDefault()
+        setModalAberto(true)
+        setTermoNome('')
+        setResultadosNome([])
+        setIndiceSelecionado(0)
+      }
+    }
+    window.addEventListener('keydown', handleAtalhoGlobal)
+    return () => window.removeEventListener('keydown', handleAtalhoGlobal)
+  }, [])
+
   function selecionarResultado(p) {
     setCodigo(p.codigo)
     setModalAberto(false)
@@ -142,7 +158,7 @@ export default function BuscaManual({ onAdicionar }) {
             placeholder="Digite o código..."
           />
           <button type="button" onClick={abrirModal}>
-            Buscar por nome
+            Buscar por nome (F3)
           </button>
         </div>
       </div>

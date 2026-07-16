@@ -1,3 +1,44 @@
+/* Estilo base de botões/campos: fixo em cores claras e com contraste alto,
+   pra não depender do tema do sistema/navegador (monitores da loja são de
+   baixa qualidade, então contraste importa mais que estética). */
+button {
+  cursor: pointer;
+  font: inherit;
+  background: #fff;
+  color: #111827;
+  border: 1px solid #8a8a85;
+  border-radius: 6px;
+  padding: 6px 12px;
+}
+
+button:hover:not(:disabled) {
+  background: #ececeb;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+input,
+select,
+textarea {
+  font: inherit;
+  background: #fff;
+  color: #111827;
+  border: 1px solid #8a8a85;
+  border-radius: 4px;
+  padding: 6px 8px;
+}
+
+input:focus,
+select:focus,
+textarea:focus,
+button:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 1px;
+}
+
 .app-shell {
   max-width: 1000px;
   margin: 0 auto;
@@ -23,8 +64,8 @@
 }
 
 .card {
-  background: var(--card-bg, #fff);
-  border: 1px solid #ddd;
+  background: #fff;
+  border: 1px solid #c2c2bd;
   border-radius: 8px;
   padding: 16px;
   margin-bottom: 16px;
@@ -65,7 +106,7 @@ th,
 td {
   text-align: left;
   padding: 6px 8px;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid #ccc;
 }
 
 .erro {
@@ -89,10 +130,6 @@ td {
   margin: 40px auto;
 }
 
-button {
-  cursor: pointer;
-}
-
 .tipo-selector {
   max-width: 480px;
   margin: 60px auto;
@@ -111,12 +148,12 @@ button {
   font-size: 18px;
   font-weight: 600;
   border-radius: 8px;
-  border: 2px solid #ddd;
-  background: #f7f7f7;
+  border: 2px solid #adada7;
+  background: #f0f0ee;
 }
 
 .tipo-botao:hover {
-  border-color: #999;
+  border-color: #6b6b66;
 }
 
 .carrinho-header {
@@ -139,7 +176,7 @@ button {
 .scanner-input input {
   font-size: 20px;
   padding: 12px;
-  border: 2px solid #999;
+  border: 2px solid #6b6b66;
   border-radius: 8px;
 }
 
@@ -213,7 +250,7 @@ button {
 }
 
 .carrinho-vazio {
-  color: #888;
+  color: #5f5f5a;
 }
 
 .carrinho-totais {
@@ -225,7 +262,7 @@ button {
   display: flex;
   gap: 8px;
   margin-bottom: 16px;
-  border-bottom: 1px solid #ddd;
+  border-bottom: 1px solid #c2c2bd;
 }
 
 .abas-gestao button {
@@ -265,8 +302,8 @@ button {
 .periodo-botoes button {
   padding: 6px 12px;
   border-radius: 6px;
-  border: 1px solid #ddd;
-  background: #f7f7f7;
+  border: 1px solid #adada7;
+  background: #f0f0ee;
   font-size: 13px;
 }
 
@@ -299,7 +336,7 @@ button {
 
 .stat-tile {
   background: #fcfcfb;
-  border: 1px solid #e1e0d9;
+  border: 1px solid #c2c2bd;
   border-radius: 8px;
   padding: 14px;
 }
@@ -325,7 +362,7 @@ button {
   align-items: flex-end;
   gap: 2px;
   height: 180px;
-  border-bottom: 1px solid #c3c2b7;
+  border-bottom: 1px solid #8a8a85;
   padding-top: 24px;
 }
 
@@ -350,7 +387,7 @@ button {
 
 .grafico-eixo-label {
   font-size: 11px;
-  color: #898781;
+  color: #5f5f5a;
   margin-top: 6px;
   white-space: nowrap;
 }
@@ -386,7 +423,7 @@ button {
 
 .campo-ajuda {
   font-size: 13px;
-  color: #898781;
+  color: #5f5f5a;
   margin-top: -4px;
 }
 
