@@ -1,16 +1,12 @@
 import { useState } from 'react'
 import ProdutosPage from './features/produtos/ProdutosPage'
+import CarrinhoPage from './features/lancamento/CarrinhoPage'
 import './App.css'
 
 const SENHA_GESTAO = import.meta.env.VITE_GESTAO_SENHA || 'rainha123'
 
 function TelaOperacao() {
-  return (
-    <div className="card">
-      <h2>Lançamento</h2>
-      <p>Tela de lançamento (carrinho de bipagem) ainda não implementada nesta etapa.</p>
-    </div>
-  )
+  return <CarrinhoPage />
 }
 
 function TelaGestao() {

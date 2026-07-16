@@ -81,3 +81,104 @@ td {
 button {
   cursor: pointer;
 }
+
+.tipo-selector {
+  max-width: 480px;
+  margin: 60px auto;
+  text-align: center;
+}
+
+.tipo-botoes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.tipo-botao {
+  padding: 24px 12px;
+  font-size: 18px;
+  font-weight: 600;
+  border-radius: 8px;
+  border: 2px solid #ddd;
+  background: #f7f7f7;
+}
+
+.tipo-botao:hover {
+  border-color: #999;
+}
+
+.carrinho-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.scanner-input {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.scanner-input label {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.scanner-input input {
+  font-size: 20px;
+  padding: 12px;
+  border: 2px solid #999;
+  border-radius: 8px;
+}
+
+.link-botao {
+  background: none;
+  border: none;
+  color: #2563eb;
+  text-decoration: underline;
+  padding: 0;
+  margin-bottom: 16px;
+}
+
+.busca-manual-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.lista-resultados {
+  list-style: none;
+  padding: 0;
+  margin: 8px 0 0;
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.lista-resultados li button {
+  width: 100%;
+  text-align: left;
+  padding: 8px;
+  background: none;
+  border: none;
+  border-bottom: 1px solid #eee;
+}
+
+.lista-resultados li button:hover {
+  background: #f5f5f5;
+}
+
+.confirmacao-manual {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.carrinho-vazio {
+  color: #888;
+}
+
+.carrinho-totais {
+  text-align: right;
+  font-size: 16px;
+}
