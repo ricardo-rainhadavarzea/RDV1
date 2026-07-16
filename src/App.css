@@ -345,3 +345,9 @@ button {
 .setor-bloco h5 {
   margin-bottom: 4px;
 }
+
+.campo-ajuda {
+  font-size: 13px;
+  color: #898781;
+  margin-top: -4px;
+}

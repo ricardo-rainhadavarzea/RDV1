@@ -131,4 +131,67 @@ export async function buscarRankingPorSetor(inicio, fim, tipo = 'desperdicio') {
   return { temVendasDoPeriodo, setores }
 }
 
+/**
+ * Saldo do buffet (ida − volta) por produto, agrupado por setor, pro
+ * período escolhido. Ex: foi 10kg de bolo, voltaram 8kg -> saldo 2kg
+ * consumidos no buffet. Não depende de vendas_periodo — é só a diferença
+ * entre os lançamentos de ida e volta dentro do período.
+ */
+export async function buscarSaldoBuffetPorSetor(inicio, fim) {
+  const { data: itens, error } = await supabase
+    .from('movimentacao_itens')
+    .select('codigo, nome, unidade, quantidade, valor, movimentacoes!inner(tipo, criado_em), produtos(secao)')
+    .in('movimentacoes.tipo', ['buffet_ida', 'buffet_volta'])
+    .gte('movimentacoes.criado_em', inicio.toISOString())
+    .lt('movimentacoes.criado_em', fim.toISOString())
+  if (error) throw error
+
+  const porProduto = new Map()
+  for (const item of itens) {
+    const atual = porProduto.get(item.codigo) ?? {
+      codigo: item.codigo,
+      nome: item.nome,
+      unidade: item.unidade,
+      secao: item.produtos?.secao?.trim() || 'Sem seção',
+      qtdIda: 0,
+      qtdVolta: 0,
+      valorIda: 0,
+      valorVolta: 0,
+    }
+    if (item.movimentacoes.tipo === 'buffet_ida') {
+      atual.qtdIda += Number(item.quantidade)
+      atual.valorIda += Number(item.valor)
+    } else {
+      atual.qtdVolta += Number(item.quantidade)
+      atual.valorVolta += Number(item.valor)
+    }
+    porProduto.set(item.codigo, atual)
+  }
+
+  const produtos = [...porProduto.values()].map((p) => ({
+    ...p,
+    saldoQuantidade: p.qtdIda - p.qtdVolta,
+    saldoValor: p.valorIda - p.valorVolta,
+  }))
+
+  const porSetor = new Map()
+  for (const p of produtos) {
+    if (!porSetor.has(p.secao)) porSetor.set(p.secao, [])
+    porSetor.get(p.secao).push(p)
+  }
+  for (const lista of porSetor.values()) {
+    lista.sort((a, b) => b.saldoValor - a.saldoValor)
+  }
+
+  const setores = [...porSetor.entries()]
+    .map(([secao, produtosDoSetor]) => ({
+      secao,
+      produtos: produtosDoSetor,
+      totalSaldoValor: produtosDoSetor.reduce((s, p) => s + p.saldoValor, 0),
+    }))
+    .sort((a, b) => b.totalSaldoValor - a.totalSaldoValor)
+
+  return { setores }
+}
+
 export { formatarISO }
