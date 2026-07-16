@@ -56,6 +56,25 @@ export async function buscarDesperdicioPorSemana(numSemanas = 8) {
   return semanas
 }
 
+/** Agrupa itens de movimentação por produto, somando quantidade e valor. */
+function agruparItensPorProduto(itens) {
+  const porProduto = new Map()
+  for (const item of itens) {
+    const atual = porProduto.get(item.codigo) ?? {
+      codigo: item.codigo,
+      nome: item.nome,
+      unidade: item.unidade,
+      secao: item.produtos?.secao?.trim() || 'Sem seção',
+      quantidade: 0,
+      valor: 0,
+    }
+    atual.quantidade += Number(item.quantidade)
+    atual.valor += Number(item.valor)
+    porProduto.set(item.codigo, atual)
+  }
+  return [...porProduto.values()]
+}
+
 /**
  * Ranking de desperdício agrupado por setor, pro período escolhido no filtro
  * principal. A % de desperdício/vendido só é calculada quando o período
@@ -90,22 +109,7 @@ export async function buscarRankingPorSetor(inicio, fim, tipo = 'desperdicio') {
   const vendasMap = new Map(vendas.map((v) => [v.codigo, Number(v.quantidade)]))
   const temVendasDoPeriodo = vendas.length > 0
 
-  const porProduto = new Map()
-  for (const item of itens) {
-    const atual = porProduto.get(item.codigo) ?? {
-      codigo: item.codigo,
-      nome: item.nome,
-      unidade: item.unidade,
-      secao: item.produtos?.secao?.trim() || 'Sem seção',
-      quantidade: 0,
-      valor: 0,
-    }
-    atual.quantidade += Number(item.quantidade)
-    atual.valor += Number(item.valor)
-    porProduto.set(item.codigo, atual)
-  }
-
-  const produtos = [...porProduto.values()].map((p) => {
+  const produtos = agruparItensPorProduto(itens).map((p) => {
     const qtdVendida = vendasMap.get(p.codigo)
     const percentual = vendasMap.has(p.codigo) && qtdVendida > 0 ? (p.quantidade / qtdVendida) * 100 : null
     return { ...p, percentual }
@@ -190,6 +194,41 @@ export async function buscarSaldoBuffetPorSetor(inicio, fim) {
       totalSaldoValor: produtosDoSetor.reduce((s, p) => s + p.saldoValor, 0),
     }))
     .sort((a, b) => b.totalSaldoValor - a.totalSaldoValor)
+
+  return { setores }
+}
+
+/**
+ * Ranking de uso interno por setor — soma simples de quantidade e valor por
+ * produto. Sem comparação com vendas (não se aplica a uso interno).
+ */
+export async function buscarUsoInternoPorSetor(inicio, fim) {
+  const { data: itens, error } = await supabase
+    .from('movimentacao_itens')
+    .select('codigo, nome, unidade, quantidade, valor, movimentacoes!inner(tipo, criado_em), produtos(secao)')
+    .eq('movimentacoes.tipo', 'uso_interno')
+    .gte('movimentacoes.criado_em', inicio.toISOString())
+    .lt('movimentacoes.criado_em', fim.toISOString())
+  if (error) throw error
+
+  const produtos = agruparItensPorProduto(itens)
+
+  const porSetor = new Map()
+  for (const p of produtos) {
+    if (!porSetor.has(p.secao)) porSetor.set(p.secao, [])
+    porSetor.get(p.secao).push(p)
+  }
+  for (const lista of porSetor.values()) {
+    lista.sort((a, b) => b.valor - a.valor)
+  }
+
+  const setores = [...porSetor.entries()]
+    .map(([secao, produtosDoSetor]) => ({
+      secao,
+      produtos: produtosDoSetor,
+      totalValor: produtosDoSetor.reduce((s, p) => s + p.valor, 0),
+    }))
+    .sort((a, b) => b.totalValor - a.totalValor)
 
   return { setores }
 }

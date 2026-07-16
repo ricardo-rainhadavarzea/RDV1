@@ -391,27 +391,32 @@ button {
   }
 
   /* cada botão de impressão mostra só a seção correspondente */
-  body[data-imprimir='desperdicio'] .ranking-buffet {
+  .ranking-desperdicio,
+  .ranking-buffet,
+  .ranking-uso-interno {
     display: none !important;
   }
 
-  body[data-imprimir='buffet'] .ranking-desperdicio {
-    display: none !important;
+  body[data-imprimir='desperdicio'] .ranking-desperdicio,
+  body[data-imprimir='buffet'] .ranking-buffet,
+  body[data-imprimir='uso_interno'] .ranking-uso-interno {
+    display: block !important;
   }
 
   .cabecalho-impressao {
     display: block;
-    margin-bottom: 16px;
+    margin-bottom: 8px;
   }
 
   .cabecalho-impressao h2 {
-    margin: 0 0 4px;
+    margin: 0 0 2px;
+    font-size: 15px;
   }
 
   .cabecalho-impressao p {
     margin: 0;
     color: #52514e;
-    font-size: 13px;
+    font-size: 10px;
   }
 
   .app-shell {
@@ -423,7 +428,12 @@ button {
     border: none;
     box-shadow: none;
     padding: 0;
-    margin-bottom: 12px;
+    margin-bottom: 4px;
+  }
+
+  .card h4 {
+    margin: 0 0 4px;
+    font-size: 13px;
   }
 
   .stat-tile {
@@ -432,15 +442,28 @@ button {
 
   .setor-bloco {
     break-inside: avoid;
+    margin-top: 6px;
+  }
+
+  .setor-bloco h5 {
+    margin: 0 0 2px;
+    font-size: 11px;
+  }
+
+  .campo-ajuda {
+    font-size: 10px;
+    margin: 0 0 4px;
   }
 
   table {
-    font-size: 12px;
+    font-size: 9px;
+    line-height: 1.15;
+    margin: 2px 0;
   }
 
   th,
   td {
-    padding: 4px 6px;
+    padding: 1px 4px;
   }
 
   .grafico-tooltip {

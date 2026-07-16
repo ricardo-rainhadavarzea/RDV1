@@ -4,17 +4,20 @@ import TotaisCards from './TotaisCards'
 import GraficoSemanal from './GraficoSemanal'
 import RankingPorSetor from './RankingPorSetor'
 import SaldoBuffetPorSetor from './SaldoBuffetPorSetor'
+import UsoInternoPorSetor from './UsoInternoPorSetor'
 import { calcularPeriodo, formatarISO, descreverPeriodo } from './periodoUtils'
 import {
   buscarTotaisPeriodo,
   buscarRankingPorSetor,
   buscarDesperdicioPorSemana,
   buscarSaldoBuffetPorSetor,
+  buscarUsoInternoPorSetor,
 } from './indicadoresApi'
 
 const TOTAIS_VAZIOS = { desperdicio: 0, buffetIda: 0, buffetVolta: 0, saldoBuffet: 0, usoInterno: 0 }
 const RANKING_VAZIO = { temVendasDoPeriodo: false, setores: [] }
 const SALDO_BUFFET_VAZIO = { setores: [] }
+const USO_INTERNO_VAZIO = { setores: [] }
 
 export default function IndicadoresPage() {
   const [filtro, setFiltro] = useState('semana_atual')
@@ -26,6 +29,7 @@ export default function IndicadoresPage() {
   const [totais, setTotais] = useState(TOTAIS_VAZIOS)
   const [ranking, setRanking] = useState(RANKING_VAZIO)
   const [saldoBuffet, setSaldoBuffet] = useState(SALDO_BUFFET_VAZIO)
+  const [usoInterno, setUsoInterno] = useState(USO_INTERNO_VAZIO)
   const [semanas, setSemanas] = useState([])
   const [carregando, setCarregando] = useState(false)
   const [erro, setErro] = useState(null)
@@ -41,12 +45,14 @@ export default function IndicadoresPage() {
       buscarRankingPorSetor(inicio, fim),
       buscarDesperdicioPorSemana(8),
       buscarSaldoBuffetPorSetor(inicio, fim),
+      buscarUsoInternoPorSetor(inicio, fim),
     ])
-      .then(([totaisRes, rankingRes, semanasRes, saldoBuffetRes]) => {
+      .then(([totaisRes, rankingRes, semanasRes, saldoBuffetRes, usoInternoRes]) => {
         setTotais(totaisRes)
         setRanking(rankingRes)
         setSemanas(semanasRes)
         setSaldoBuffet(saldoBuffetRes)
+        setUsoInterno(usoInternoRes)
       })
       .catch((err) => setErro(err.message))
       .finally(() => setCarregando(false))
@@ -88,6 +94,9 @@ export default function IndicadoresPage() {
           <button className="botao-imprimir" onClick={() => imprimir('buffet')}>
             Imprimir Saldo do Buffet
           </button>
+          <button className="botao-imprimir" onClick={() => imprimir('uso_interno')}>
+            Imprimir Uso Interno
+          </button>
         </div>
       </div>
 
@@ -104,6 +113,7 @@ export default function IndicadoresPage() {
           </div>
           <RankingPorSetor resultado={ranking} />
           <SaldoBuffetPorSetor resultado={saldoBuffet} />
+          <UsoInternoPorSetor resultado={usoInterno} />
         </>
       )}
     </div>
