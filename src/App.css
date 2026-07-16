@@ -182,3 +182,32 @@ button {
   text-align: right;
   font-size: 16px;
 }
+
+.abas-gestao {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid #ddd;
+}
+
+.abas-gestao button {
+  padding: 8px 16px;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  font-weight: 600;
+}
+
+.abas-gestao button.aba-ativa {
+  border-bottom-color: #2563eb;
+  color: #2563eb;
+}
+
+.periodos-importados {
+  margin-top: 16px;
+}
+
+.periodos-importados ul {
+  margin: 4px 0 0;
+  padding-left: 20px;
+}

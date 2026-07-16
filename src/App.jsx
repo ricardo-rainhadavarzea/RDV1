@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import ProdutosPage from './features/produtos/ProdutosPage'
 import CarrinhoPage from './features/lancamento/CarrinhoPage'
+import VendasImportPage from './features/vendas/VendasImportPage'
 import './App.css'
 
 const SENHA_GESTAO = import.meta.env.VITE_GESTAO_SENHA || 'rainha123'
@@ -9,11 +10,30 @@ function TelaOperacao() {
   return <CarrinhoPage />
 }
 
+const ABAS_GESTAO = [
+  { value: 'produtos', label: 'Produtos' },
+  { value: 'vendas', label: 'Vendas Semanais' },
+]
+
 function TelaGestao() {
+  const [aba, setAba] = useState('produtos')
+
   return (
     <div>
       <h2>Gestão</h2>
-      <ProdutosPage />
+      <nav className="abas-gestao">
+        {ABAS_GESTAO.map((a) => (
+          <button
+            key={a.value}
+            className={aba === a.value ? 'aba-ativa' : ''}
+            onClick={() => setAba(a.value)}
+          >
+            {a.label}
+          </button>
+        ))}
+      </nav>
+      {aba === 'produtos' && <ProdutosPage />}
+      {aba === 'vendas' && <VendasImportPage />}
     </div>
   )
 }
