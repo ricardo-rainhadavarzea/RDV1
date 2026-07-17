@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import TipoSelector from './TipoSelector'
-import ScannerInput from './ScannerInput'
-import BuscaManual from './BuscaManual'
+import EntradaProduto from './EntradaProduto'
 import CarrinhoList from './CarrinhoList'
 import { decodeEtiqueta } from './decodeEtiqueta'
 import { buscarProdutoPorCodigo, salvarMovimentacao, TIPOS } from './lancamentoApi'
@@ -23,46 +22,75 @@ export default function CarrinhoPage() {
     setItens((prev) => prev.filter((_, i) => i !== index))
   }
 
+  /**
+   * Duas leituras possíveis pro mesmo scan de 13 dígitos:
+   * 1. Etiqueta de balança (prefixo "20", valor embutido) — produto próprio,
+   *    pesado ou contado, quantidade calculada a partir do valor.
+   * 2. Código de barras padrão EAN-13 — produto terceirizado (comprado
+   *    pronto), o código bipado É o código do produto, sempre 1 unidade.
+   * Tenta o formato de balança primeiro; se não decodificar ou o produto não
+   * bater, tenta como EAN-13 direto antes de desistir.
+   */
   async function handleCodigoCompleto(digits) {
     setErro(null)
     setMensagem(null)
 
     const decodificado = decodeEtiqueta(digits)
-    if (!decodificado) {
-      setErro(`Etiqueta não reconhecida (${digits}).`)
-      return
+
+    if (decodificado) {
+      let produto
+      try {
+        produto = await buscarProdutoPorCodigo(decodificado.codigoProduto)
+      } catch (err) {
+        setErro(err.message)
+        return
+      }
+      if (produto) {
+        if (!produto.preco_unitario || produto.preco_unitario <= 0) {
+          setErro(
+            `"${produto.nome}" não tem preço cadastrado — não dá pra calcular a quantidade automaticamente. Cadastre um preço em Gestão > Produtos.`
+          )
+          return
+        }
+        const quantidade = decodificado.valor / produto.preco_unitario
+        adicionarItem({
+          codigo: produto.codigo,
+          nome: produto.nome,
+          unidade: produto.unidade,
+          quantidade,
+          valor: decodificado.valor,
+          origem: 'bipagem',
+        })
+        setMensagem(`Adicionado: ${produto.nome} — ${quantidade.toFixed(3)} ${produto.unidade}`)
+        return
+      }
     }
 
-    let produto
+    let produtoEan
     try {
-      produto = await buscarProdutoPorCodigo(decodificado.codigoProduto)
+      produtoEan = await buscarProdutoPorCodigo(digits)
     } catch (err) {
       setErro(err.message)
       return
     }
-
-    if (!produto) {
-      setErro(`Produto não encontrado (código ${decodificado.codigoProduto}).`)
+    if (produtoEan) {
+      if (!produtoEan.preco_unitario || produtoEan.preco_unitario <= 0) {
+        setErro(`"${produtoEan.nome}" não tem preço cadastrado. Cadastre um preço em Gestão > Produtos.`)
+        return
+      }
+      adicionarItem({
+        codigo: produtoEan.codigo,
+        nome: produtoEan.nome,
+        unidade: produtoEan.unidade,
+        quantidade: 1,
+        valor: produtoEan.preco_unitario,
+        origem: 'bipagem',
+      })
+      setMensagem(`Adicionado: ${produtoEan.nome} — 1 ${produtoEan.unidade}`)
       return
     }
 
-    if (!produto.preco_unitario || produto.preco_unitario <= 0) {
-      setErro(
-        `"${produto.nome}" não tem preço cadastrado — não dá pra calcular a quantidade automaticamente. Cadastre um preço em Gestão > Produtos.`
-      )
-      return
-    }
-
-    const quantidade = decodificado.valor / produto.preco_unitario
-    adicionarItem({
-      codigo: produto.codigo,
-      nome: produto.nome,
-      unidade: produto.unidade,
-      quantidade,
-      valor: decodificado.valor,
-      origem: 'bipagem',
-    })
-    setMensagem(`Adicionado: ${produto.nome} — ${quantidade.toFixed(3)} ${produto.unidade}`)
+    setErro(`Produto não encontrado (código ${decodificado ? decodificado.codigoProduto : digits}).`)
   }
 
   function trocarTipo() {
@@ -105,12 +133,10 @@ export default function CarrinhoPage() {
       </div>
 
       <div className="card">
-        <ScannerInput onCodigoCompleto={handleCodigoCompleto} desabilitado={salvando} />
+        <EntradaProduto onCodigoCompleto={handleCodigoCompleto} onAdicionar={adicionarItem} desabilitado={salvando} />
         {mensagem && <p className="sucesso">{mensagem}</p>}
         {erro && <p className="erro">{erro}</p>}
       </div>
-
-      <BuscaManual onAdicionar={adicionarItem} />
 
       <div className="card">
         <CarrinhoList itens={itens} onRemover={removerItem} />

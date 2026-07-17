@@ -67,8 +67,8 @@ button:focus-visible {
   background: #fff;
   border: 1px solid #c2c2bd;
   border-radius: 8px;
-  padding: 16px;
-  margin-bottom: 16px;
+  padding: 12px;
+  margin-bottom: 10px;
 }
 
 .campo {
@@ -110,13 +110,24 @@ td {
 }
 
 .erro {
-  color: #c0392b;
+  color: #7a2018;
   font-weight: 600;
+  background: #fbe4e1;
+  border: 1px solid #d47268;
+  border-radius: 6px;
+  padding: 8px 12px;
+  margin: 8px 0 0;
 }
 
 .sucesso {
-  color: #27ae60;
-  font-weight: 600;
+  color: #14532d;
+  font-weight: 700;
+  font-size: 16px;
+  background: #dcf5e3;
+  border: 1px solid #6fcf8f;
+  border-radius: 6px;
+  padding: 10px 14px;
+  margin: 8px 0 0;
 }
 
 .paginacao {
@@ -162,22 +173,15 @@ td {
   align-items: center;
 }
 
-.scanner-input {
+.entrada-produto {
   display: flex;
   flex-direction: column;
   gap: 4px;
 }
 
-.scanner-input label {
+.entrada-produto > label {
   font-size: 13px;
   font-weight: 600;
-}
-
-.scanner-input input {
-  font-size: 20px;
-  padding: 12px;
-  border: 2px solid #6b6b66;
-  border-radius: 8px;
 }
 
 .linha-codigo-manual {
@@ -187,8 +191,10 @@ td {
 
 .linha-codigo-manual input {
   flex: 1;
-  font-size: 16px;
-  padding: 8px;
+  font-size: 18px;
+  padding: 9px 10px;
+  border: 2px solid #6b6b66;
+  border-radius: 8px;
 }
 
 .modal-overlay {
