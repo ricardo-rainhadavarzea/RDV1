@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { criarProduto } from './produtosApi'
 
-const VAZIO = { codigo: '', nome: '', unidade: 'UN', preco_unitario: '', grupo: '', secao: '' }
+const VAZIO = { codigo: '', nome: '', unidade: 'UN', preco_unitario: '', preco_compra: '', grupo: '', secao: '' }
 
 export default function ProdutoForm({ onCriado }) {
   const [form, setForm] = useState(VAZIO)
@@ -25,6 +25,14 @@ export default function ProdutoForm({ onCriado }) {
       setErro('Preço inválido.')
       return
     }
+    let precoCompra = null
+    if (form.preco_compra.trim() !== '') {
+      precoCompra = parseFloat(String(form.preco_compra).replace(',', '.'))
+      if (Number.isNaN(precoCompra)) {
+        setErro('Preço de compra inválido.')
+        return
+      }
+    }
 
     setSalvando(true)
     try {
@@ -33,6 +41,7 @@ export default function ProdutoForm({ onCriado }) {
         nome: form.nome.trim(),
         unidade: form.unidade,
         preco_unitario: preco,
+        preco_compra: precoCompra,
         grupo: form.grupo.trim() || null,
         secao: form.secao.trim() || null,
       })
@@ -68,6 +77,10 @@ export default function ProdutoForm({ onCriado }) {
         <div className="campo">
           <label>Preço unitário</label>
           <input value={form.preco_unitario} onChange={(e) => setCampo('preco_unitario', e.target.value)} />
+        </div>
+        <div className="campo">
+          <label>Preço de compra (custo)</label>
+          <input value={form.preco_compra} onChange={(e) => setCampo('preco_compra', e.target.value)} />
         </div>
         <div className="campo">
           <label>Grupo</label>

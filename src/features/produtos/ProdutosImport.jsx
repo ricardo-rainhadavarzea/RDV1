@@ -114,6 +114,7 @@ export default function ProdutosImport({ onImportado }) {
           <p>
             Colunas identificadas: código → <code>{preview.headerMap.codigo}</code>, nome → <code>{preview.headerMap.nome}</code>,
             unidade → <code>{preview.headerMap.unidade}</code>, preço → <code>{preview.headerMap.preco_unitario}</code>
+            {preview.headerMap.preco_compra && <> , preço de compra → <code>{preview.headerMap.preco_compra}</code></>}
             {preview.headerMap.grupo && <> , grupo → <code>{preview.headerMap.grupo}</code></>}
             {preview.headerMap.secao && <> , seção → <code>{preview.headerMap.secao}</code></>}
           </p>
@@ -124,6 +125,7 @@ export default function ProdutosImport({ onImportado }) {
                 <th>Nome</th>
                 <th>Unidade</th>
                 <th>Preço</th>
+                <th>Preço Compra</th>
                 <th>Grupo</th>
                 <th>Seção</th>
               </tr>
@@ -135,6 +137,7 @@ export default function ProdutosImport({ onImportado }) {
                   <td>{p.nome}</td>
                   <td>{p.unidade}</td>
                   <td>{p.preco_unitario.toFixed(2)}</td>
+                  <td>{p.preco_compra != null ? p.preco_compra.toFixed(2) : '—'}</td>
                   <td>{p.grupo}</td>
                   <td>{p.secao}</td>
                 </tr>

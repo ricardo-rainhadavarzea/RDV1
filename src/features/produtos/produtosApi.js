@@ -7,7 +7,8 @@ const HEADER_ALIASES = {
   codigo: ['codigo', 'cod', 'codproduto', 'codigoproduto', 'codigodebarras'],
   nome: ['nome', 'descricao', 'produto', 'nomedoproduto'],
   unidade: ['unidade', 'un', 'und', 'unidadedemedida'],
-  preco_unitario: ['precounitario', 'preco', 'valorunitario', 'preco unitario'],
+  preco_unitario: ['precounitario', 'preco', 'valorunitario', 'preco unitario', 'precovenda', 'preco venda'],
+  preco_compra: ['precocompra', 'preco compra', 'custo', 'precocusto'],
   grupo: ['grupo'],
   secao: ['secao', 'setor'],
 }
@@ -28,6 +29,7 @@ export function rowsToProdutos(rows, headerMap) {
       nome: String(row[headerMap.nome] ?? '').trim(),
       unidade: String(row[headerMap.unidade] ?? 'UN').trim().toUpperCase(),
       preco_unitario: parseNumeroBR(row[headerMap.preco_unitario]),
+      preco_compra: headerMap.preco_compra ? parseNumeroBR(row[headerMap.preco_compra]) : null,
       grupo: headerMap.grupo ? String(row[headerMap.grupo] ?? '').trim() : null,
       secao: headerMap.secao ? String(row[headerMap.secao] ?? '').trim() : null,
     }))

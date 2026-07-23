@@ -20,6 +20,10 @@ create table if not exists produtos (
 create index if not exists idx_produtos_secao on produtos (secao);
 create index if not exists idx_produtos_nome on produtos using gin (to_tsvector('portuguese', nome));
 
+-- Migração: preço de compra/custo (usado futuramente pra calcular CMV).
+-- Rodar isso no SQL Editor do Supabase se a tabela já existir sem essa coluna.
+alter table produtos add column if not exists preco_compra numeric(10,2);
+
 -- ============================================================
 -- MOVIMENTACOES (carrinho confirmado = um lançamento)
 -- ============================================================
