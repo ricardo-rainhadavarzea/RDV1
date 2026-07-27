@@ -77,11 +77,13 @@ function agruparItensPorProduto(itens) {
 
 /**
  * Ranking de desperdício agrupado por setor, pro período escolhido no filtro
- * principal. A % de desperdício/vendido só é calculada quando o período
- * bater exatamente com uma semana de vendas importada (mesmo periodo_inicio
- * e periodo_fim) — fora disso, ou pra produto sem registro de venda naquela
+ * principal. A % de desperdício só é calculada quando o período bater
+ * exatamente com uma semana de vendas importada (mesmo periodo_inicio e
+ * periodo_fim) — fora disso, ou pra produto sem registro de venda naquela
  * semana, percentual fica null e a UI mostra "sem dados de venda" em vez de
- * inventar um número.
+ * inventar um número. A fórmula é quantidade desperdiçada / (desperdiçada +
+ * vendida) — trata a soma como "total produzido" estimado, pra nunca passar
+ * de 100% mesmo quando desperdiçou mais do que vendeu.
  */
 export async function buscarRankingPorSetor(inicio, fim, tipo = 'desperdicio') {
   const { data: itens, error } = await supabase
@@ -111,7 +113,8 @@ export async function buscarRankingPorSetor(inicio, fim, tipo = 'desperdicio') {
 
   const produtos = agruparItensPorProduto(itens).map((p) => {
     const qtdVendida = vendasMap.get(p.codigo)
-    const percentual = vendasMap.has(p.codigo) && qtdVendida > 0 ? (p.quantidade / qtdVendida) * 100 : null
+    const totalProduzido = p.quantidade + (qtdVendida ?? 0)
+    const percentual = vendasMap.has(p.codigo) && totalProduzido > 0 ? (p.quantidade / totalProduzido) * 100 : null
     return { ...p, percentual }
   })
 
