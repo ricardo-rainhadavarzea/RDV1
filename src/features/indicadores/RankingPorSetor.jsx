@@ -20,7 +20,8 @@ export default function RankingPorSetor({ resultado }) {
         resultado.setores.map((setor) => (
           <div key={setor.secao} className="setor-bloco">
             <h5>
-              {setor.secao} — {formatarReal(setor.totalValor)}
+              {setor.secao} — {formatarReal(setor.totalValor)} ·{' '}
+              {setor.percentual == null ? 'sem dados de venda' : `${setor.percentual.toFixed(1)}% desperdício`}
             </h5>
             <table>
               <thead>

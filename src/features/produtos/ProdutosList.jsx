@@ -12,7 +12,7 @@ export default function ProdutosList({ refreshKey }) {
   const [total, setTotal] = useState(0)
   const [carregando, setCarregando] = useState(false)
   const [editandoCodigo, setEditandoCodigo] = useState(null)
-  const [precoEditado, setPrecoEditado] = useState('')
+  const [edicao, setEdicao] = useState({ nome: '', unidade: 'UN', preco_unitario: '' })
 
   useEffect(() => {
     let ativo = true
@@ -31,16 +31,15 @@ export default function ProdutosList({ refreshKey }) {
 
   function iniciarEdicao(produto) {
     setEditandoCodigo(produto.codigo)
-    setPrecoEditado(String(produto.preco_unitario))
+    setEdicao({ nome: produto.nome, unidade: produto.unidade, preco_unitario: String(produto.preco_unitario) })
   }
 
-  async function salvarPreco(codigo) {
-    const novoPreco = parseFloat(precoEditado.replace(',', '.'))
-    if (Number.isNaN(novoPreco)) return
-    await atualizarProduto(codigo, { preco_unitario: novoPreco })
-    setProdutos((prev) =>
-      prev.map((p) => (p.codigo === codigo ? { ...p, preco_unitario: novoPreco } : p))
-    )
+  async function salvarEdicao(codigo) {
+    const novoPreco = parseFloat(String(edicao.preco_unitario).replace(',', '.'))
+    if (Number.isNaN(novoPreco) || edicao.nome.trim() === '') return
+    const campos = { nome: edicao.nome.trim(), unidade: edicao.unidade, preco_unitario: novoPreco }
+    await atualizarProduto(codigo, campos)
+    setProdutos((prev) => prev.map((p) => (p.codigo === codigo ? { ...p, ...campos } : p)))
     setEditandoCodigo(null)
   }
 
@@ -78,15 +77,38 @@ export default function ProdutosList({ refreshKey }) {
             {produtos.map((p) => (
               <tr key={p.codigo}>
                 <td>{p.codigo}</td>
-                <td>{p.nome}</td>
-                <td>{p.unidade}</td>
+                <td>
+                  {editandoCodigo === p.codigo ? (
+                    <input
+                      style={{ width: 200 }}
+                      value={edicao.nome}
+                      onChange={(e) => setEdicao((ed) => ({ ...ed, nome: e.target.value }))}
+                      autoFocus
+                    />
+                  ) : (
+                    p.nome
+                  )}
+                </td>
+                <td>
+                  {editandoCodigo === p.codigo ? (
+                    <select
+                      value={edicao.unidade}
+                      onChange={(e) => setEdicao((ed) => ({ ...ed, unidade: e.target.value }))}
+                    >
+                      <option value="UN">UN</option>
+                      <option value="KG">KG</option>
+                      <option value="LT">LT</option>
+                    </select>
+                  ) : (
+                    p.unidade
+                  )}
+                </td>
                 <td>
                   {editandoCodigo === p.codigo ? (
                     <input
                       style={{ width: 80 }}
-                      value={precoEditado}
-                      onChange={(e) => setPrecoEditado(e.target.value)}
-                      autoFocus
+                      value={edicao.preco_unitario}
+                      onChange={(e) => setEdicao((ed) => ({ ...ed, preco_unitario: e.target.value }))}
                     />
                   ) : (
                     p.preco_unitario.toFixed(2)
@@ -97,11 +119,11 @@ export default function ProdutosList({ refreshKey }) {
                 <td>
                   {editandoCodigo === p.codigo ? (
                     <>
-                      <button onClick={() => salvarPreco(p.codigo)}>Salvar</button>
+                      <button onClick={() => salvarEdicao(p.codigo)}>Salvar</button>
                       <button onClick={() => setEditandoCodigo(null)}>Cancelar</button>
                     </>
                   ) : (
-                    <button onClick={() => iniciarEdicao(p)}>Editar preço</button>
+                    <button onClick={() => iniciarEdicao(p)}>Editar</button>
                   )}
                 </td>
               </tr>

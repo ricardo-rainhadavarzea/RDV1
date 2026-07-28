@@ -75,15 +75,51 @@ function agruparItensPorProduto(itens) {
   return [...porProduto.values()]
 }
 
+/** Agrupa itens de buffet (ida/volta) por produto, pra saldo líquido (ida − volta) em qtd e R$. */
+function agruparBuffetLiquidoPorProduto(itens) {
+  const porProduto = new Map()
+  for (const item of itens) {
+    const atual = porProduto.get(item.codigo) ?? { qtdIda: 0, qtdVolta: 0, valorIda: 0, valorVolta: 0 }
+    if (item.movimentacoes.tipo === 'buffet_ida') {
+      atual.qtdIda += Number(item.quantidade)
+      atual.valorIda += Number(item.valor)
+    } else {
+      atual.qtdVolta += Number(item.quantidade)
+      atual.valorVolta += Number(item.valor)
+    }
+    porProduto.set(item.codigo, atual)
+  }
+  const liquidoPorCodigo = new Map()
+  for (const [codigo, v] of porProduto) {
+    liquidoPorCodigo.set(codigo, {
+      qtd: Math.max(0, v.qtdIda - v.qtdVolta),
+      valor: Math.max(0, v.valorIda - v.valorVolta),
+    })
+  }
+  return liquidoPorCodigo
+}
+
 /**
  * Ranking de desperdício agrupado por setor, pro período escolhido no filtro
  * principal. A % de desperdício só é calculada quando o período bater
  * exatamente com uma semana de vendas importada (mesmo periodo_inicio e
  * periodo_fim) — fora disso, ou pra produto sem registro de venda naquela
  * semana, percentual fica null e a UI mostra "sem dados de venda" em vez de
- * inventar um número. A fórmula é quantidade desperdiçada / (desperdiçada +
- * vendida) — trata a soma como "total produzido" estimado, pra nunca passar
- * de 100% mesmo quando desperdiçou mais do que vendeu.
+ * inventar um número.
+ *
+ * A fórmula por produto é quantidade desperdiçada / "total produzido", onde
+ * produzido = desperdiçada + vendida + consumida no buffet (ida − volta,
+ * nunca negativo) — trata essa soma como o total produzido estimado, pra
+ * nunca passar de 100% mesmo quando desperdiçou mais do que vendeu.
+ *
+ * As % agregadas por setor (`setor.percentual`) e da padaria toda
+ * (`percentualGeral`) são média ponderada por valor em R$ — soma do valor
+ * desperdiçado / soma do valor produzido (desperdício + venda + buffet) —
+ * e não uma média simples das % de cada produto, senão um produto pequeno
+ * com % alta pesaria igual a um produto grande com % baixa. Só entram nessa
+ * conta os produtos que já têm % individual calculada (ou seja, com venda
+ * no período); produto "sem dados de venda" fica de fora da agregação
+ * também, pra manter a mesma base de comparação.
  */
 export async function buscarRankingPorSetor(inicio, fim, tipo = 'desperdicio') {
   const { data: itens, error } = await supabase
@@ -94,6 +130,15 @@ export async function buscarRankingPorSetor(inicio, fim, tipo = 'desperdicio') {
     .lt('movimentacoes.criado_em', fim.toISOString())
   if (error) throw error
 
+  const { data: itensBuffet, error: erroBuffet } = await supabase
+    .from('movimentacao_itens')
+    .select('codigo, quantidade, valor, movimentacoes!inner(tipo, criado_em)')
+    .in('movimentacoes.tipo', ['buffet_ida', 'buffet_volta'])
+    .gte('movimentacoes.criado_em', inicio.toISOString())
+    .lt('movimentacoes.criado_em', fim.toISOString())
+  if (erroBuffet) throw erroBuffet
+  const buffetLiquidoMap = agruparBuffetLiquidoPorProduto(itensBuffet)
+
   // `fim` é exclusivo (início do dia seguinte ao último dia do período) —
   // o último dia do período em si é um dia antes disso.
   const ultimoDia = new Date(fim)
@@ -103,19 +148,29 @@ export async function buscarRankingPorSetor(inicio, fim, tipo = 'desperdicio') {
 
   const { data: vendas, error: erroVendas } = await supabase
     .from('vendas_periodo')
-    .select('codigo, quantidade')
+    .select('codigo, quantidade, preco_medio, total')
     .eq('periodo_inicio', periodoInicioISO)
     .eq('periodo_fim', periodoFimISO)
   if (erroVendas) throw erroVendas
 
-  const vendasMap = new Map(vendas.map((v) => [v.codigo, Number(v.quantidade)]))
+  const vendasMap = new Map(vendas.map((v) => [v.codigo, v]))
   const temVendasDoPeriodo = vendas.length > 0
 
   const produtos = agruparItensPorProduto(itens).map((p) => {
-    const qtdVendida = vendasMap.get(p.codigo)
-    const totalProduzido = p.quantidade + (qtdVendida ?? 0)
-    const percentual = vendasMap.has(p.codigo) && totalProduzido > 0 ? (p.quantidade / totalProduzido) * 100 : null
-    return { ...p, percentual }
+    const venda = vendasMap.get(p.codigo)
+    const qtdVendida = venda ? Number(venda.quantidade) : undefined
+    const buffetLiquido = buffetLiquidoMap.get(p.codigo) ?? { qtd: 0, valor: 0 }
+
+    const totalProduzidoQtd = p.quantidade + (qtdVendida ?? 0) + buffetLiquido.qtd
+    const percentual = vendasMap.has(p.codigo) && totalProduzidoQtd > 0 ? (p.quantidade / totalProduzidoQtd) * 100 : null
+
+    let valorProduzido = null
+    if (venda) {
+      const valorVenda = venda.total != null ? Number(venda.total) : Number(venda.preco_medio ?? 0) * qtdVendida
+      valorProduzido = p.valor + valorVenda + buffetLiquido.valor
+    }
+
+    return { ...p, percentual, valorProduzido }
   })
 
   const porSetor = new Map()
@@ -127,15 +182,27 @@ export async function buscarRankingPorSetor(inicio, fim, tipo = 'desperdicio') {
     lista.sort((a, b) => b.valor - a.valor)
   }
 
+  /** % agregada ponderada por R$, só sobre produtos com valorProduzido conhecido. */
+  function percentualPonderado(lista) {
+    const comDados = lista.filter((p) => p.valorProduzido != null && p.valorProduzido > 0)
+    if (comDados.length === 0) return null
+    const somaDesperdicio = comDados.reduce((s, p) => s + p.valor, 0)
+    const somaProduzido = comDados.reduce((s, p) => s + p.valorProduzido, 0)
+    return somaProduzido > 0 ? (somaDesperdicio / somaProduzido) * 100 : null
+  }
+
   const setores = [...porSetor.entries()]
     .map(([secao, produtosDoSetor]) => ({
       secao,
       produtos: produtosDoSetor,
       totalValor: produtosDoSetor.reduce((s, p) => s + p.valor, 0),
+      percentual: percentualPonderado(produtosDoSetor),
     }))
     .sort((a, b) => b.totalValor - a.totalValor)
 
-  return { temVendasDoPeriodo, setores }
+  const percentualGeral = percentualPonderado(produtos)
+
+  return { temVendasDoPeriodo, setores, percentualGeral }
 }
 
 /**

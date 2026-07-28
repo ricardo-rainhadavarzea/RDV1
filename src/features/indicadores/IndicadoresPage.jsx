@@ -106,7 +106,7 @@ export default function IndicadoresPage() {
       {!carregando && (
         <>
           <div className="so-tela">
-            <TotaisCards totais={totais} />
+            <TotaisCards totais={totais} percentualGeral={ranking.percentualGeral} />
             <div className="card">
               <GraficoSemanal semanas={semanas} />
             </div>
