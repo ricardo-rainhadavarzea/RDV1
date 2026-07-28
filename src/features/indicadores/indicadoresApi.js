@@ -56,13 +56,19 @@ export async function buscarDesperdicioPorSemana(numSemanas = 8) {
   return semanas
 }
 
-/** Agrupa itens de movimentação por produto, somando quantidade e valor. */
+/**
+ * Agrupa itens de movimentação por produto, somando quantidade e valor. O
+ * nome exibido é sempre o nome ATUAL do cadastro de produtos (não a "foto"
+ * gravada no lançamento) — assim, corrigir um nome no cadastro reflete em
+ * todo o histórico de relatórios. Só cai no nome gravado no lançamento se o
+ * produto tiver sido excluído do cadastro depois.
+ */
 function agruparItensPorProduto(itens) {
   const porProduto = new Map()
   for (const item of itens) {
     const atual = porProduto.get(item.codigo) ?? {
       codigo: item.codigo,
-      nome: item.nome,
+      nome: item.produtos?.nome?.trim() || item.nome,
       unidade: item.unidade,
       secao: item.produtos?.secao?.trim() || 'Sem seção',
       quantidade: 0,
@@ -124,7 +130,7 @@ function agruparBuffetLiquidoPorProduto(itens) {
 export async function buscarRankingPorSetor(inicio, fim, tipo = 'desperdicio') {
   const { data: itens, error } = await supabase
     .from('movimentacao_itens')
-    .select('codigo, nome, unidade, quantidade, valor, movimentacoes!inner(tipo, criado_em), produtos(secao)')
+    .select('codigo, nome, unidade, quantidade, valor, movimentacoes!inner(tipo, criado_em), produtos(secao, nome)')
     .eq('movimentacoes.tipo', tipo)
     .gte('movimentacoes.criado_em', inicio.toISOString())
     .lt('movimentacoes.criado_em', fim.toISOString())
@@ -214,7 +220,7 @@ export async function buscarRankingPorSetor(inicio, fim, tipo = 'desperdicio') {
 export async function buscarSaldoBuffetPorSetor(inicio, fim) {
   const { data: itens, error } = await supabase
     .from('movimentacao_itens')
-    .select('codigo, nome, unidade, quantidade, valor, movimentacoes!inner(tipo, criado_em), produtos(secao)')
+    .select('codigo, nome, unidade, quantidade, valor, movimentacoes!inner(tipo, criado_em), produtos(secao, nome)')
     .in('movimentacoes.tipo', ['buffet_ida', 'buffet_volta'])
     .gte('movimentacoes.criado_em', inicio.toISOString())
     .lt('movimentacoes.criado_em', fim.toISOString())
@@ -224,7 +230,7 @@ export async function buscarSaldoBuffetPorSetor(inicio, fim) {
   for (const item of itens) {
     const atual = porProduto.get(item.codigo) ?? {
       codigo: item.codigo,
-      nome: item.nome,
+      nome: item.produtos?.nome?.trim() || item.nome,
       unidade: item.unidade,
       secao: item.produtos?.secao?.trim() || 'Sem seção',
       qtdIda: 0,
@@ -275,7 +281,7 @@ export async function buscarSaldoBuffetPorSetor(inicio, fim) {
 export async function buscarUsoInternoPorSetor(inicio, fim) {
   const { data: itens, error } = await supabase
     .from('movimentacao_itens')
-    .select('codigo, nome, unidade, quantidade, valor, movimentacoes!inner(tipo, criado_em), produtos(secao)')
+    .select('codigo, nome, unidade, quantidade, valor, movimentacoes!inner(tipo, criado_em), produtos(secao, nome)')
     .eq('movimentacoes.tipo', 'uso_interno')
     .gte('movimentacoes.criado_em', inicio.toISOString())
     .lt('movimentacoes.criado_em', fim.toISOString())
