@@ -1,6 +1,7 @@
 import Papa from 'papaparse'
 import { supabase } from '../../lib/supabaseClient'
 import { mapHeaders, parseNumeroBR, padCodigo } from '../../lib/csvUtils'
+import { buscarTodasLinhas } from '../../lib/supabasePagination'
 
 const CHUNK_SIZE = 500
 
@@ -104,11 +105,9 @@ export async function importarVendas(periodoInicio, periodoFim, linhas, onProgre
 }
 
 export async function listarPeriodosImportados() {
-  const { data, error } = await supabase
-    .from('vendas_periodo')
-    .select('periodo_inicio, periodo_fim')
-    .order('periodo_inicio', { ascending: false })
-  if (error) throw error
+  const data = await buscarTodasLinhas(() =>
+    supabase.from('vendas_periodo').select('periodo_inicio, periodo_fim').order('periodo_inicio', { ascending: false })
+  )
 
   const vistos = new Set()
   const periodos = []
