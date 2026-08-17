@@ -2,14 +2,18 @@ function formatarReal(valor) {
   return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 }
 
-export default function TotaisCards({ totais, percentualGeral }) {
+export default function TotaisCards({ totais, percentualGeral, detalhesCarregados }) {
+  function valorPercentualGeral() {
+    if (!detalhesCarregados) return 'clique em Carregar'
+    return percentualGeral == null ? 'sem dados de venda' : `${percentualGeral.toFixed(1)}%`
+  }
+
   const cards = [
     {
       label: '% Desperdício Geral',
-      valor: percentualGeral == null ? 'sem dados de venda' : `${percentualGeral.toFixed(1)}%`,
+      valor: valorPercentualGeral(),
     },
     { label: 'Desperdício', valor: formatarReal(totais.desperdicio) },
-    { label: 'Buffet Ida', valor: formatarReal(totais.buffetIda) },
     { label: 'Saldo líquido Buffet (Ida − Volta)', valor: formatarReal(totais.saldoBuffet) },
     { label: 'Uso Interno', valor: formatarReal(totais.usoInterno) },
   ]

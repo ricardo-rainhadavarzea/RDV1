@@ -32,6 +32,8 @@ export default function IndicadoresPage() {
   const [usoInterno, setUsoInterno] = useState(USO_INTERNO_VAZIO)
   const [semanas, setSemanas] = useState([])
   const [carregando, setCarregando] = useState(false)
+  const [carregandoDetalhes, setCarregandoDetalhes] = useState(false)
+  const [detalhesCarregados, setDetalhesCarregados] = useState(false)
   const [erro, setErro] = useState(null)
   const [periodoTexto, setPeriodoTexto] = useState('')
 
@@ -40,23 +42,36 @@ export default function IndicadoresPage() {
     setPeriodoTexto(descreverPeriodo(filtro, inicio, fim))
     setCarregando(true)
     setErro(null)
-    Promise.all([
-      buscarTotaisPeriodo(inicio, fim),
-      buscarRankingPorSetor(inicio, fim),
-      buscarDesperdicioPorSemana(8),
-      buscarSaldoBuffetPorSetor(inicio, fim),
-      buscarUsoInternoPorSetor(inicio, fim),
-    ])
-      .then(([totaisRes, rankingRes, semanasRes, saldoBuffetRes, usoInternoRes]) => {
+    // Trocar de período invalida o ranking/saldo/uso interno já carregados —
+    // em vez de recarregar tudo automaticamente (consultas pesadas), espera
+    // o usuário clicar em "Carregar detalhes" de novo.
+    setRanking(RANKING_VAZIO)
+    setSaldoBuffet(SALDO_BUFFET_VAZIO)
+    setUsoInterno(USO_INTERNO_VAZIO)
+    setDetalhesCarregados(false)
+    Promise.all([buscarTotaisPeriodo(inicio, fim), buscarDesperdicioPorSemana(8)])
+      .then(([totaisRes, semanasRes]) => {
         setTotais(totaisRes)
-        setRanking(rankingRes)
         setSemanas(semanasRes)
-        setSaldoBuffet(saldoBuffetRes)
-        setUsoInterno(usoInternoRes)
       })
       .catch((err) => setErro(err.message))
       .finally(() => setCarregando(false))
   }, [filtro, personalizado])
+
+  function carregarDetalhes() {
+    const { inicio, fim } = calcularPeriodo(filtro, personalizado)
+    setCarregandoDetalhes(true)
+    setErro(null)
+    Promise.all([buscarRankingPorSetor(inicio, fim), buscarSaldoBuffetPorSetor(inicio, fim), buscarUsoInternoPorSetor(inicio, fim)])
+      .then(([rankingRes, saldoBuffetRes, usoInternoRes]) => {
+        setRanking(rankingRes)
+        setSaldoBuffet(saldoBuffetRes)
+        setUsoInterno(usoInternoRes)
+        setDetalhesCarregados(true)
+      })
+      .catch((err) => setErro(err.message))
+      .finally(() => setCarregandoDetalhes(false))
+  }
 
   function imprimir(secao) {
     document.body.dataset.imprimir = secao
@@ -88,13 +103,16 @@ export default function IndicadoresPage() {
           onPersonalizadoChange={setPersonalizado}
         />
         <div className="botoes-imprimir">
-          <button className="botao-imprimir" onClick={() => imprimir('desperdicio')}>
+          <button onClick={carregarDetalhes} disabled={carregandoDetalhes}>
+            {carregandoDetalhes ? 'Carregando detalhes...' : 'Carregar detalhes do período'}
+          </button>
+          <button className="botao-imprimir" onClick={() => imprimir('desperdicio')} disabled={!detalhesCarregados}>
             Imprimir Ranking de Desperdício
           </button>
-          <button className="botao-imprimir" onClick={() => imprimir('buffet')}>
+          <button className="botao-imprimir" onClick={() => imprimir('buffet')} disabled={!detalhesCarregados}>
             Imprimir Saldo do Buffet
           </button>
-          <button className="botao-imprimir" onClick={() => imprimir('uso_interno')}>
+          <button className="botao-imprimir" onClick={() => imprimir('uso_interno')} disabled={!detalhesCarregados}>
             Imprimir Uso Interno
           </button>
         </div>
@@ -106,14 +124,21 @@ export default function IndicadoresPage() {
       {!carregando && (
         <>
           <div className="so-tela">
-            <TotaisCards totais={totais} percentualGeral={ranking.percentualGeral} />
+            <TotaisCards totais={totais} percentualGeral={ranking.percentualGeral} detalhesCarregados={detalhesCarregados} />
             <div className="card">
               <GraficoSemanal semanas={semanas} />
             </div>
           </div>
-          <RankingPorSetor resultado={ranking} />
-          <SaldoBuffetPorSetor resultado={saldoBuffet} />
-          <UsoInternoPorSetor resultado={usoInterno} />
+          {!detalhesCarregados && !carregandoDetalhes && (
+            <p className="campo-ajuda">Escolha o período e clique em "Carregar detalhes do período" pra ver o ranking de desperdício, saldo do buffet e uso interno.</p>
+          )}
+          {detalhesCarregados && (
+            <>
+              <RankingPorSetor resultado={ranking} />
+              <SaldoBuffetPorSetor resultado={saldoBuffet} />
+              <UsoInternoPorSetor resultado={usoInterno} />
+            </>
+          )}
         </>
       )}
     </div>

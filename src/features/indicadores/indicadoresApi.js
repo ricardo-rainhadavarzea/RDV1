@@ -60,6 +60,77 @@ export async function buscarDesperdicioPorSemana(numSemanas = 8) {
 }
 
 /**
+ * Histórico de desperdício de UM produto nas últimas `numSemanas` semanas
+ * (incluindo a atual), pro mini-card de histórico no Ranking de Desperdício.
+ * Mesma fórmula de % usada em `buscarRankingPorSetor` (quantidade / (quantidade
+ * + vendida + buffet líquido), só quando há venda importada pra aquela
+ * semana exata). Mais recente primeiro.
+ */
+export async function buscarHistoricoProduto(codigo, numSemanas = 4) {
+  const inicioJanela = segundaFeiraDe(new Date())
+  inicioJanela.setDate(inicioJanela.getDate() - 7 * (numSemanas - 1))
+
+  const itensDesperdicio = await buscarTodasLinhas(() =>
+    supabase
+      .from('movimentacao_itens')
+      .select('quantidade, valor, movimentacoes!inner(tipo, criado_em)')
+      .eq('codigo', codigo)
+      .eq('movimentacoes.tipo', 'desperdicio')
+      .gte('movimentacoes.criado_em', inicioJanela.toISOString())
+  )
+
+  const itensBuffet = await buscarTodasLinhas(() =>
+    supabase
+      .from('movimentacao_itens')
+      .select('quantidade, movimentacoes!inner(tipo, criado_em)')
+      .eq('codigo', codigo)
+      .in('movimentacoes.tipo', ['buffet_ida', 'buffet_volta'])
+      .gte('movimentacoes.criado_em', inicioJanela.toISOString())
+  )
+
+  const vendas = await buscarTodasLinhas(() =>
+    supabase
+      .from('vendas_periodo')
+      .select('periodo_inicio, quantidade')
+      .eq('codigo', codigo)
+      .gte('periodo_inicio', formatarISO(inicioJanela))
+  )
+  const vendasPorInicio = new Map(vendas.map((v) => [v.periodo_inicio, Number(v.quantidade)]))
+
+  const semanas = []
+  for (let i = 0; i < numSemanas; i++) {
+    const inicioSemana = new Date(inicioJanela)
+    inicioSemana.setDate(inicioSemana.getDate() + 7 * i)
+    const fimSemana = new Date(inicioSemana)
+    fimSemana.setDate(fimSemana.getDate() + 7)
+    const naSemana = (criadoEm) => {
+      const d = new Date(criadoEm)
+      return d >= inicioSemana && d < fimSemana
+    }
+
+    const itensSemana = itensDesperdicio.filter((it) => naSemana(it.movimentacoes.criado_em))
+    const quantidade = itensSemana.reduce((s, it) => s + Number(it.quantidade), 0)
+    const valor = itensSemana.reduce((s, it) => s + Number(it.valor), 0)
+
+    const qtdIda = itensBuffet
+      .filter((it) => it.movimentacoes.tipo === 'buffet_ida' && naSemana(it.movimentacoes.criado_em))
+      .reduce((s, it) => s + Number(it.quantidade), 0)
+    const qtdVolta = itensBuffet
+      .filter((it) => it.movimentacoes.tipo === 'buffet_volta' && naSemana(it.movimentacoes.criado_em))
+      .reduce((s, it) => s + Number(it.quantidade), 0)
+    const buffetLiquidoQtd = Math.max(0, qtdIda - qtdVolta)
+
+    const qtdVendida = vendasPorInicio.get(formatarISO(inicioSemana))
+    const totalProduzido = quantidade + (qtdVendida ?? 0) + buffetLiquidoQtd
+    const percentual = qtdVendida != null && totalProduzido > 0 ? (quantidade / totalProduzido) * 100 : null
+
+    semanas.push({ inicio: inicioSemana, quantidade, valor, percentual })
+  }
+
+  return semanas.reverse()
+}
+
+/**
  * Agrupa itens de movimentação por produto, somando quantidade e valor. O
  * nome exibido é sempre o nome ATUAL do cadastro de produtos (não a "foto"
  * gravada no lançamento) — assim, corrigir um nome no cadastro reflete em
