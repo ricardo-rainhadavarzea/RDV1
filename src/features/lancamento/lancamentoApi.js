@@ -1,4 +1,5 @@
 import { supabase } from '../../lib/supabaseClient'
+import { buscarTodasLinhas } from '../../lib/supabasePagination'
 
 export const TIPOS = [
   { value: 'desperdicio', label: 'Desperdício' },
@@ -50,4 +51,24 @@ export async function salvarMovimentacao(tipo, itens) {
   if (itensError) throw itensError
 
   return movimentacao
+}
+
+/** Lançamentos do período (+ filtro opcional de tipo), com os itens embutidos, mais recentes primeiro. */
+export async function buscarMovimentacoes(inicio, fim, tipo) {
+  return buscarTodasLinhas(() => {
+    let query = supabase
+      .from('movimentacoes')
+      .select('id, tipo, criado_em, total_itens, total_valor, movimentacao_itens(codigo, nome, unidade, quantidade, valor, origem)')
+      .gte('criado_em', inicio.toISOString())
+      .lt('criado_em', fim.toISOString())
+      .order('criado_em', { ascending: false })
+    if (tipo) query = query.eq('tipo', tipo)
+    return query
+  })
+}
+
+/** Cancela (apaga) um lançamento — os itens somem junto via cascade no banco. */
+export async function cancelarMovimentacao(id) {
+  const { error } = await supabase.from('movimentacoes').delete().eq('id', id)
+  if (error) throw error
 }

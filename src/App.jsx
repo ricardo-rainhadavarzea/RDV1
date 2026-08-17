@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import ProdutosPage from './features/produtos/ProdutosPage'
 import CarrinhoPage from './features/lancamento/CarrinhoPage'
+import CancelarLancamentoPage from './features/lancamento/CancelarLancamentoPage'
 import VendasImportPage from './features/vendas/VendasImportPage'
 import IndicadoresPage from './features/indicadores/IndicadoresPage'
 import './App.css'
@@ -15,6 +16,7 @@ const ABAS_GESTAO = [
   { value: 'indicadores', label: 'Indicadores' },
   { value: 'produtos', label: 'Produtos' },
   { value: 'vendas', label: 'Vendas Semanais' },
+  { value: 'lancamentos', label: 'Lançamentos' },
 ]
 
 function TelaGestao() {
@@ -37,6 +39,7 @@ function TelaGestao() {
       {aba === 'indicadores' && <IndicadoresPage />}
       {aba === 'produtos' && <ProdutosPage />}
       {aba === 'vendas' && <VendasImportPage />}
+      {aba === 'lancamentos' && <CancelarLancamentoPage />}
     </div>
   )
 }
