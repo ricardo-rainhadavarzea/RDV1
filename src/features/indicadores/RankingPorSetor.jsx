@@ -11,7 +11,10 @@ function formatarSemana(inicio) {
 
 const LARGURA_GRAFICO = 200
 const ALTURA_GRAFICO = 64
-const PADDING_GRAFICO = 6
+const PADDING_X = 24 // margem lateral, dá espaço pro texto do valor não cortar nas pontas
+const PADDING_Y = 6
+const ESPACO_VALOR = 12 // espaço reservado no topo pro texto do valor de cada ponto
+const ESPACO_DATA = 14 // espaço reservado embaixo pro texto da data de cada ponto
 
 /**
  * Gráfico de linha simples (SVG puro, sem lib) pro histórico de 4 semanas no
@@ -24,8 +27,9 @@ function GraficoHistorico({ pontos, formatarValor }) {
   const min = Math.min(...valores, 0)
   const amplitude = max - min || 1
 
-  const x = (i) => PADDING_GRAFICO + (i / (pontos.length - 1)) * (LARGURA_GRAFICO - PADDING_GRAFICO * 2)
-  const y = (v) => ALTURA_GRAFICO - PADDING_GRAFICO - ((v - min) / amplitude) * (ALTURA_GRAFICO - PADDING_GRAFICO * 2)
+  const x = (i) => PADDING_X + (i / (pontos.length - 1)) * (LARGURA_GRAFICO - PADDING_X * 2)
+  const y = (v) =>
+    ESPACO_VALOR + ALTURA_GRAFICO - PADDING_Y - ((v - min) / amplitude) * (ALTURA_GRAFICO - PADDING_Y * 2)
 
   let path = ''
   let emTraco = false
@@ -39,7 +43,11 @@ function GraficoHistorico({ pontos, formatarValor }) {
   })
 
   return (
-    <svg width={LARGURA_GRAFICO} height={ALTURA_GRAFICO + 14} viewBox={`0 0 ${LARGURA_GRAFICO} ${ALTURA_GRAFICO + 14}`}>
+    <svg
+      width={LARGURA_GRAFICO}
+      height={ESPACO_VALOR + ALTURA_GRAFICO + ESPACO_DATA}
+      viewBox={`0 0 ${LARGURA_GRAFICO} ${ESPACO_VALOR + ALTURA_GRAFICO + ESPACO_DATA}`}
+    >
       <path d={path} fill="none" stroke="#fff" strokeWidth="1.5" />
       {pontos.map(
         (p, i) =>
@@ -51,8 +59,16 @@ function GraficoHistorico({ pontos, formatarValor }) {
             </circle>
           )
       )}
+      {pontos.map(
+        (p, i) =>
+          p.valor != null && (
+            <text key={i} x={x(i)} y={y(p.valor) - 5} fontSize="9" fill="#fff" textAnchor="middle">
+              {formatarValor(p.valor)}
+            </text>
+          )
+      )}
       {pontos.map((p, i) => (
-        <text key={i} x={x(i)} y={ALTURA_GRAFICO + 12} fontSize="9" fill="#b5b5ad" textAnchor="middle">
+        <text key={i} x={x(i)} y={ESPACO_VALOR + ALTURA_GRAFICO + 12} fontSize="9" fill="#b5b5ad" textAnchor="middle">
           {formatarSemana(p.inicio)}
         </text>
       ))}
