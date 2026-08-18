@@ -438,24 +438,6 @@ td {
   z-index: 2;
 }
 
-.historico-tooltip table {
-  margin: 0;
-  border-collapse: collapse;
-}
-
-.historico-tooltip th,
-.historico-tooltip td {
-  padding: 2px 8px 2px 0;
-  text-align: left;
-  font-weight: normal;
-  border: none;
-}
-
-.historico-tooltip th {
-  color: #b5b5ad;
-  font-weight: 600;
-}
-
 .setor-bloco {
   margin-top: 16px;
 }

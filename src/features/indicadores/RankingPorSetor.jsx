@@ -9,6 +9,63 @@ function formatarSemana(inicio) {
   return inicio.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
 }
 
+const LARGURA_GRAFICO = 200
+const ALTURA_GRAFICO = 64
+const PADDING_GRAFICO = 6
+
+/**
+ * Gráfico de linha simples (SVG puro, sem lib) pro histórico de 4 semanas no
+ * hover. `pontos` já vem em ordem cronológica (mais antiga primeiro). Semana
+ * sem valor (ex: % sem dado de venda) vira um buraco na linha, não um 0.
+ */
+function GraficoHistorico({ pontos, formatarValor }) {
+  const valores = pontos.map((p) => p.valor).filter((v) => v != null)
+  const max = Math.max(...valores, 0)
+  const min = Math.min(...valores, 0)
+  const amplitude = max - min || 1
+
+  const x = (i) => PADDING_GRAFICO + (i / (pontos.length - 1)) * (LARGURA_GRAFICO - PADDING_GRAFICO * 2)
+  const y = (v) => ALTURA_GRAFICO - PADDING_GRAFICO - ((v - min) / amplitude) * (ALTURA_GRAFICO - PADDING_GRAFICO * 2)
+
+  let path = ''
+  let emTraco = false
+  pontos.forEach((p, i) => {
+    if (p.valor == null) {
+      emTraco = false
+      return
+    }
+    path += `${emTraco ? 'L' : 'M'}${x(i).toFixed(1)},${y(p.valor).toFixed(1)} `
+    emTraco = true
+  })
+
+  return (
+    <svg width={LARGURA_GRAFICO} height={ALTURA_GRAFICO + 14} viewBox={`0 0 ${LARGURA_GRAFICO} ${ALTURA_GRAFICO + 14}`}>
+      <path d={path} fill="none" stroke="#fff" strokeWidth="1.5" />
+      {pontos.map(
+        (p, i) =>
+          p.valor != null && (
+            <circle key={i} cx={x(i)} cy={y(p.valor)} r="2.5" fill="#fff">
+              <title>
+                {formatarSemana(p.inicio)}: {formatarValor(p.valor)}
+              </title>
+            </circle>
+          )
+      )}
+      {pontos.map((p, i) => (
+        <text key={i} x={x(i)} y={ALTURA_GRAFICO + 12} fontSize="9" fill="#b5b5ad" textAnchor="middle">
+          {formatarSemana(p.inicio)}
+        </text>
+      ))}
+    </svg>
+  )
+}
+
+const FORMATADORES_CAMPO = {
+  quantidade: (v) => v.toFixed(3),
+  valor: formatarReal,
+  percentual: (v) => `${v.toFixed(1)}%`,
+}
+
 export default function RankingPorSetor({ resultado }) {
   const [hover, setHover] = useState(null) // { codigo, campo } | null
   const [historico, setHistorico] = useState(null) // array | null (do código em hover)
@@ -30,32 +87,20 @@ export default function RankingPorSetor({ resultado }) {
     })
   }
 
-  function renderTooltip(codigo) {
+  function renderTooltip(campo) {
+    const pontos = historico
+      ? historico
+          .slice()
+          .reverse() // buscarHistoricoProduto devolve mais recente primeiro; o gráfico lê da esquerda (mais antiga) pra direita
+          .map((s) => ({ inicio: s.inicio, valor: s[campo] }))
+      : []
+
     return (
       <div className="historico-tooltip">
         {historico === null ? (
           'Carregando...'
         ) : (
-          <table>
-            <thead>
-              <tr>
-                <th>Semana</th>
-                <th>Qtd</th>
-                <th>Valor</th>
-                <th>%</th>
-              </tr>
-            </thead>
-            <tbody>
-              {historico.map((s, i) => (
-                <tr key={i}>
-                  <td>{formatarSemana(s.inicio)}</td>
-                  <td>{s.quantidade.toFixed(3)}</td>
-                  <td>{formatarReal(s.valor)}</td>
-                  <td>{s.percentual == null ? '—' : `${s.percentual.toFixed(1)}%`}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <GraficoHistorico pontos={pontos} formatarValor={FORMATADORES_CAMPO[campo]} />
         )}
       </div>
     )
@@ -100,7 +145,7 @@ export default function RankingPorSetor({ resultado }) {
                       onMouseLeave={() => setHover(null)}
                     >
                       {p.quantidade.toFixed(3)} {p.unidade}
-                      {hover?.codigo === p.codigo && hover.campo === 'quantidade' && renderTooltip(p.codigo)}
+                      {hover?.codigo === p.codigo && hover.campo === 'quantidade' && renderTooltip('quantidade')}
                     </td>
                     <td
                       className="celula-com-historico"
@@ -108,7 +153,7 @@ export default function RankingPorSetor({ resultado }) {
                       onMouseLeave={() => setHover(null)}
                     >
                       {formatarReal(p.valor)}
-                      {hover?.codigo === p.codigo && hover.campo === 'valor' && renderTooltip(p.codigo)}
+                      {hover?.codigo === p.codigo && hover.campo === 'valor' && renderTooltip('valor')}
                     </td>
                     <td
                       className="celula-com-historico"
@@ -116,7 +161,7 @@ export default function RankingPorSetor({ resultado }) {
                       onMouseLeave={() => setHover(null)}
                     >
                       {p.percentual == null ? 'sem dados de venda' : `${p.percentual.toFixed(1)}%`}
-                      {hover?.codigo === p.codigo && hover.campo === 'percentual' && renderTooltip(p.codigo)}
+                      {hover?.codigo === p.codigo && hover.campo === 'percentual' && renderTooltip('percentual')}
                     </td>
                   </tr>
                 ))}
