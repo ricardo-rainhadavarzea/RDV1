@@ -18,6 +18,7 @@ export default function CancelarLancamentoPage() {
     fim: formatarISO(new Date()),
   })
   const [tipoFiltro, setTipoFiltro] = useState('')
+  const [ordenacao, setOrdenacao] = useState('data') // 'data' | 'valor_desc' | 'valor_asc'
   const [movimentacoes, setMovimentacoes] = useState([])
   const [carregando, setCarregando] = useState(false)
   const [erro, setErro] = useState(null)
@@ -35,6 +36,12 @@ export default function CancelarLancamentoPage() {
   }
 
   useEffect(carregar, [filtro, personalizado, tipoFiltro])
+
+  const movimentacoesOrdenadas = [...movimentacoes].sort((a, b) => {
+    if (ordenacao === 'valor_desc') return b.total_valor - a.total_valor
+    if (ordenacao === 'valor_asc') return a.total_valor - b.total_valor
+    return new Date(b.criado_em) - new Date(a.criado_em)
+  })
 
   async function handleCancelar(mov) {
     const tipoLabel = TIPOS.find((t) => t.value === mov.tipo)?.label ?? mov.tipo
@@ -79,13 +86,28 @@ export default function CancelarLancamentoPage() {
         </select>
       </div>
 
+      <div className="campo">
+        <label>Ordenar por</label>
+        <div className="periodo-botoes">
+          <button className={ordenacao === 'data' ? 'periodo-ativo' : ''} onClick={() => setOrdenacao('data')}>
+            Mais recente
+          </button>
+          <button className={ordenacao === 'valor_desc' ? 'periodo-ativo' : ''} onClick={() => setOrdenacao('valor_desc')}>
+            Maior valor
+          </button>
+          <button className={ordenacao === 'valor_asc' ? 'periodo-ativo' : ''} onClick={() => setOrdenacao('valor_asc')}>
+            Menor valor
+          </button>
+        </div>
+      </div>
+
       {erro && <p className="erro">{erro}</p>}
       {carregando && <p>Carregando...</p>}
 
       {!carregando && movimentacoes.length === 0 && <p className="carrinho-vazio">Nenhum lançamento nesse período.</p>}
 
       {!carregando &&
-        movimentacoes.map((mov) => {
+        movimentacoesOrdenadas.map((mov) => {
           const tipoLabel = TIPOS.find((t) => t.value === mov.tipo)?.label ?? mov.tipo
           const expandido = expandidoId === mov.id
           return (
