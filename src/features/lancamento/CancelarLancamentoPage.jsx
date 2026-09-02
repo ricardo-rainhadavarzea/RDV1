@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import PeriodoFiltro from '../indicadores/PeriodoFiltro'
 import { calcularPeriodo, formatarISO } from '../indicadores/periodoUtils'
-import { buscarMovimentacoes, cancelarMovimentacao, TIPOS } from './lancamentoApi'
+import { buscarMovimentacoes, cancelarMovimentacao, atualizarItemMovimentacao, excluirItemMovimentacao, TIPOS } from './lancamentoApi'
 
 function formatarReal(valor) {
   return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
@@ -24,6 +24,9 @@ export default function CancelarLancamentoPage() {
   const [erro, setErro] = useState(null)
   const [expandidoId, setExpandidoId] = useState(null)
   const [cancelandoId, setCancelandoId] = useState(null)
+  const [itemEditando, setItemEditando] = useState(null) // { itemId, quantidade, valor } | null
+  const [salvandoItem, setSalvandoItem] = useState(false)
+  const [excluindoItemId, setExcluindoItemId] = useState(null)
 
   function carregar() {
     const { inicio, fim } = calcularPeriodo(filtro, personalizado)
@@ -59,6 +62,78 @@ export default function CancelarLancamentoPage() {
       setErro(err.message)
     } finally {
       setCancelandoId(null)
+    }
+  }
+
+  function iniciarEdicaoItem(item) {
+    setItemEditando({ itemId: item.id, quantidade: String(item.quantidade), valor: String(item.valor) })
+  }
+
+  async function handleSalvarItem(mov, item) {
+    const novaQuantidade = parseFloat(String(itemEditando.quantidade).replace(',', '.'))
+    const novoValor = parseFloat(String(itemEditando.valor).replace(',', '.'))
+    if (Number.isNaN(novaQuantidade) || Number.isNaN(novoValor)) {
+      setErro('Quantidade ou valor inválido.')
+      return
+    }
+
+    setSalvandoItem(true)
+    setErro(null)
+    try {
+      const totais = await atualizarItemMovimentacao(item.id, mov.id, { quantidade: novaQuantidade, valor: novoValor })
+      setMovimentacoes((prev) =>
+        prev.map((m) =>
+          m.id !== mov.id
+            ? m
+            : {
+                ...m,
+                total_itens: totais.total_itens,
+                total_valor: totais.total_valor,
+                movimentacao_itens: m.movimentacao_itens.map((it) =>
+                  it.id === item.id ? { ...it, quantidade: novaQuantidade, valor: novoValor } : it
+                ),
+              }
+        )
+      )
+      setItemEditando(null)
+    } catch (err) {
+      setErro(err.message)
+    } finally {
+      setSalvandoItem(false)
+    }
+  }
+
+  async function handleExcluirItem(mov, item) {
+    const confirmar = window.confirm(
+      `Excluir só este item (mantém os outros do lançamento)?\n\n${item.nome} — ${Number(item.quantidade).toFixed(3)} ${item.unidade} — ${formatarReal(Number(item.valor))}\n\nEssa ação não pode ser desfeita.`
+    )
+    if (!confirmar) return
+
+    setExcluindoItemId(item.id)
+    setErro(null)
+    try {
+      const totais = await excluirItemMovimentacao(item.id, mov.id)
+      if (totais === null) {
+        // Era o único item do lançamento — o lançamento inteiro foi removido junto.
+        setMovimentacoes((prev) => prev.filter((m) => m.id !== mov.id))
+      } else {
+        setMovimentacoes((prev) =>
+          prev.map((m) =>
+            m.id !== mov.id
+              ? m
+              : {
+                  ...m,
+                  total_itens: totais.total_itens,
+                  total_valor: totais.total_valor,
+                  movimentacao_itens: m.movimentacao_itens.filter((it) => it.id !== item.id),
+                }
+          )
+        )
+      }
+    } catch (err) {
+      setErro(err.message)
+    } finally {
+      setExcluindoItemId(null)
     }
   }
 
@@ -136,19 +211,66 @@ export default function CancelarLancamentoPage() {
                       <th>Quantidade</th>
                       <th>Valor</th>
                       <th>Origem</th>
+                      <th></th>
                     </tr>
                   </thead>
                   <tbody>
-                    {mov.movimentacao_itens.map((item, i) => (
-                      <tr key={i}>
-                        <td>{item.nome}</td>
-                        <td>
-                          {Number(item.quantidade).toFixed(3)} {item.unidade}
-                        </td>
-                        <td>{formatarReal(Number(item.valor))}</td>
-                        <td>{item.origem}</td>
-                      </tr>
-                    ))}
+                    {mov.movimentacao_itens.map((item) => {
+                      const editandoEsteItem = itemEditando?.itemId === item.id
+                      return (
+                        <tr key={item.id}>
+                          <td>{item.nome}</td>
+                          <td>
+                            {editandoEsteItem ? (
+                              <>
+                                <input
+                                  style={{ width: 80 }}
+                                  value={itemEditando.quantidade}
+                                  onChange={(e) => setItemEditando((ed) => ({ ...ed, quantidade: e.target.value }))}
+                                  autoFocus
+                                />{' '}
+                                {item.unidade}
+                              </>
+                            ) : (
+                              <>
+                                {Number(item.quantidade).toFixed(3)} {item.unidade}
+                              </>
+                            )}
+                          </td>
+                          <td>
+                            {editandoEsteItem ? (
+                              <input
+                                style={{ width: 80 }}
+                                value={itemEditando.valor}
+                                onChange={(e) => setItemEditando((ed) => ({ ...ed, valor: e.target.value }))}
+                              />
+                            ) : (
+                              formatarReal(Number(item.valor))
+                            )}
+                          </td>
+                          <td>{item.origem}</td>
+                          <td>
+                            {editandoEsteItem ? (
+                              <>
+                                <button onClick={() => handleSalvarItem(mov, item)} disabled={salvandoItem}>
+                                  {salvandoItem ? 'Salvando...' : 'Salvar'}
+                                </button>
+                                <button onClick={() => setItemEditando(null)} disabled={salvandoItem}>
+                                  Cancelar
+                                </button>
+                              </>
+                            ) : (
+                              <>
+                                <button onClick={() => iniciarEdicaoItem(item)}>Editar</button>
+                                <button onClick={() => handleExcluirItem(mov, item)} disabled={excluindoItemId === item.id}>
+                                  {excluindoItemId === item.id ? 'Excluindo...' : 'Excluir'}
+                                </button>
+                              </>
+                            )}
+                          </td>
+                        </tr>
+                      )
+                    })}
                   </tbody>
                 </table>
               )}
