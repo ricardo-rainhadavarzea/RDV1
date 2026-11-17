@@ -68,7 +68,17 @@ export default function CancelarLancamentoPage({ periodoInicial }) {
   }
 
   function iniciarEdicaoItem(item) {
-    setItemEditando({ itemId: item.id, quantidade: String(item.quantidade), valor: String(item.valor) })
+    const qtdOriginal = Number(item.quantidade)
+    const precoUnitario = qtdOriginal > 0 ? Number(item.valor) / qtdOriginal : 0
+    setItemEditando({ itemId: item.id, quantidade: String(item.quantidade), valor: String(item.valor), precoUnitario })
+  }
+
+  function handleQuantidadeChange(novaQuantidadeStr) {
+    setItemEditando((ed) => {
+      const qtd = parseFloat(novaQuantidadeStr.replace(',', '.'))
+      const novoValor = Number.isNaN(qtd) ? ed.valor : (qtd * ed.precoUnitario).toFixed(2)
+      return { ...ed, quantidade: novaQuantidadeStr, valor: novoValor }
+    })
   }
 
   async function handleSalvarItem(mov, item) {
@@ -228,7 +238,7 @@ export default function CancelarLancamentoPage({ periodoInicial }) {
                                 <input
                                   style={{ width: 80 }}
                                   value={itemEditando.quantidade}
-                                  onChange={(e) => setItemEditando((ed) => ({ ...ed, quantidade: e.target.value }))}
+                                  onChange={(e) => handleQuantidadeChange(e.target.value)}
                                   autoFocus
                                 />{' '}
                                 {item.unidade}
