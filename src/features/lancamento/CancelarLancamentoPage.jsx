@@ -11,12 +11,14 @@ function formatarDataHora(iso) {
   return new Date(iso).toLocaleString('pt-BR')
 }
 
-export default function CancelarLancamentoPage() {
-  const [filtro, setFiltro] = useState('hoje')
-  const [personalizado, setPersonalizado] = useState({
-    inicio: formatarISO(new Date()),
-    fim: formatarISO(new Date()),
-  })
+export default function CancelarLancamentoPage({ periodoInicial }) {
+  const [filtro, setFiltro] = useState(periodoInicial ? 'personalizado' : 'hoje')
+  const [personalizado, setPersonalizado] = useState(
+    periodoInicial ?? {
+      inicio: formatarISO(new Date()),
+      fim: formatarISO(new Date()),
+    }
+  )
   const [tipoFiltro, setTipoFiltro] = useState('')
   const [ordenacao, setOrdenacao] = useState('data') // 'data' | 'valor_desc' | 'valor_asc'
   const [movimentacoes, setMovimentacoes] = useState([])

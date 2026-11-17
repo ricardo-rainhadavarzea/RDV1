@@ -383,6 +383,13 @@ td {
   cursor: default;
 }
 
+.grafico-coluna-clicavel {
+  cursor: pointer;
+}
+.grafico-coluna-clicavel:hover .grafico-barra {
+  filter: brightness(1.15);
+}
+
 .grafico-barra {
   width: 100%;
   max-width: 24px;

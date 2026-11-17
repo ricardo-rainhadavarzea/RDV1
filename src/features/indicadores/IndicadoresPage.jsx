@@ -19,7 +19,7 @@ const RANKING_VAZIO = { temVendasDoPeriodo: false, setores: [] }
 const SALDO_BUFFET_VAZIO = { setores: [] }
 const USO_INTERNO_VAZIO = { setores: [] }
 
-export default function IndicadoresPage() {
+export default function IndicadoresPage({ onSelecionarSemana }) {
   const [filtro, setFiltro] = useState('semana_atual')
   const [personalizado, setPersonalizado] = useState({
     inicio: formatarISO(new Date()),
@@ -126,7 +126,7 @@ export default function IndicadoresPage() {
           <div className="so-tela">
             <TotaisCards totais={totais} percentualGeral={ranking.percentualGeral} detalhesCarregados={detalhesCarregados} />
             <div className="card">
-              <GraficoSemanal semanas={semanas} />
+              <GraficoSemanal semanas={semanas} onSelecionarSemana={onSelecionarSemana} />
             </div>
           </div>
           {!detalhesCarregados && !carregandoDetalhes && (

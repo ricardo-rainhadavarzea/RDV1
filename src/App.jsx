@@ -4,6 +4,7 @@ import CarrinhoPage from './features/lancamento/CarrinhoPage'
 import CancelarLancamentoPage from './features/lancamento/CancelarLancamentoPage'
 import VendasImportPage from './features/vendas/VendasImportPage'
 import IndicadoresPage from './features/indicadores/IndicadoresPage'
+import { formatarISO } from './features/indicadores/periodoUtils'
 import './App.css'
 
 const SENHA_GESTAO = import.meta.env.VITE_GESTAO_SENHA || 'rainha123'
@@ -21,6 +22,14 @@ const ABAS_GESTAO = [
 
 function TelaGestao() {
   const [aba, setAba] = useState('indicadores')
+  const [periodoLancamentos, setPeriodoLancamentos] = useState(null)
+
+  function irParaLancamentosDaSemana(inicioSemana) {
+    const fimSemana = new Date(inicioSemana)
+    fimSemana.setDate(fimSemana.getDate() + 6)
+    setPeriodoLancamentos({ inicio: formatarISO(inicioSemana), fim: formatarISO(fimSemana) })
+    setAba('lancamentos')
+  }
 
   return (
     <div>
@@ -36,10 +45,10 @@ function TelaGestao() {
           </button>
         ))}
       </nav>
-      {aba === 'indicadores' && <IndicadoresPage />}
+      {aba === 'indicadores' && <IndicadoresPage onSelecionarSemana={irParaLancamentosDaSemana} />}
       {aba === 'produtos' && <ProdutosPage />}
       {aba === 'vendas' && <VendasImportPage />}
-      {aba === 'lancamentos' && <CancelarLancamentoPage />}
+      {aba === 'lancamentos' && <CancelarLancamentoPage periodoInicial={periodoLancamentos} />}
     </div>
   )
 }
