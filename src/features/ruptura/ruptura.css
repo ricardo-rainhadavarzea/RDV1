@@ -331,3 +331,124 @@
   position: sticky;
   left: 0;
 }
+
+/* ---------- Celular ---------- */
+
+html {
+  -webkit-text-size-adjust: 100%;
+  touch-action: manipulation; /* sem zoom por toque duplo */
+}
+
+/* Modo "app Ruptura" (ícone da tela inicial): sem topbar, respeita a área segura do aparelho */
+.app-shell-ruptura {
+  padding-top: max(12px, env(safe-area-inset-top));
+  padding-bottom: max(12px, env(safe-area-inset-bottom));
+}
+
+@media (max-width: 600px) {
+  .app-shell {
+    padding: 10px;
+  }
+
+  .titulo-app h1 {
+    font-size: 22px;
+  }
+
+  .titulo-app p {
+    display: none;
+  }
+
+  .tipo-selector {
+    margin: 16px auto;
+  }
+
+  .rup-inicio,
+  .rup-checagem,
+  .rup-final {
+    margin-bottom: 0;
+  }
+
+  /* Checagem ocupa a altura da tela e deixa Sim/Não no rodapé, ao alcance do polegar */
+  .rup-checagem,
+  .rup-final {
+    box-sizing: border-box;
+  }
+
+  .rup-checagem {
+    display: flex;
+    flex-direction: column;
+    min-height: calc(100dvh - 90px);
+    padding-bottom: max(12px, env(safe-area-inset-bottom));
+  }
+
+  .app-shell.app-shell-ruptura {
+    padding: max(12px, env(safe-area-inset-top)) 10px max(12px, env(safe-area-inset-bottom));
+  }
+
+  .app-shell-ruptura .rup-checagem,
+  .app-shell-ruptura .rup-final {
+    min-height: calc(100dvh - max(12px, env(safe-area-inset-top)) - max(12px, env(safe-area-inset-bottom)));
+  }
+
+  .rup-pergunta {
+    flex: 1;
+    justify-content: center;
+    padding: 16px 0;
+  }
+
+  .rup-produto {
+    font-size: 28px;
+  }
+
+  .rup-resp {
+    min-height: 110px;
+  }
+
+  .rup-final {
+    min-height: calc(100dvh - 90px);
+    justify-content: center;
+  }
+
+  /* Alvos de toque maiores */
+  .rup-turno {
+    min-height: 92px;
+  }
+
+  .rup-inicio button,
+  .rup-inicio input,
+  .rup-final button,
+  .rup-checagem > .carrinho-header button,
+  .rup-filtro button,
+  .rup-filtro input,
+  .rup-barra-selecao button,
+  .rup-barra-selecao input[type='search'],
+  .rup-acoes-setor button,
+  .rup-linha-form input {
+    min-height: 44px;
+  }
+
+  .rup-lista-produtos label {
+    padding: 10px 0;
+  }
+
+  .rup-lista-produtos input[type='checkbox'] {
+    width: 24px;
+    height: 24px;
+    min-height: 0;
+    flex-shrink: 0;
+  }
+
+  .rup-salvar {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .rup-filtro label,
+  .rup-filtro input[type='date'] {
+    width: 100%;
+  }
+
+  .rup-filtro button {
+    flex: 1;
+  }
+}

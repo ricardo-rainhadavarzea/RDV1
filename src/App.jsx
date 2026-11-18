@@ -5,8 +5,10 @@ import CancelarLancamentoPage from './features/lancamento/CancelarLancamentoPage
 import VendasImportPage from './features/vendas/VendasImportPage'
 import IndicadoresPage from './features/indicadores/IndicadoresPage'
 import GestaoRupturaPage from './features/ruptura/GestaoRupturaPage'
+import RupturaPage from './features/ruptura/RupturaPage'
 import { formatarISO } from './features/indicadores/periodoUtils'
 import './App.css'
+import './features/ruptura/ruptura.css' // depois do App.css, para os ajustes da ruptura (e de celular) valerem
 
 const SENHA_GESTAO = import.meta.env.VITE_GESTAO_SENHA || 'rainha123'
 
@@ -95,8 +97,23 @@ function LoginGestao({ onEntrar, onCancelar }) {
   )
 }
 
+// Aberto pelo ícone "Ruptura" da tela inicial do celular (?app=ruptura): só a checagem, sem o resto do RDV.
+const MODO_RUPTURA = new URLSearchParams(window.location.search).get('app') === 'ruptura'
+
+function AppRuptura() {
+  const [chave, setChave] = useState(0) // trocar a chave recomeça na tela de início da ruptura
+
+  return (
+    <div className="app-shell app-shell-ruptura">
+      <RupturaPage key={chave} semVoltar onSair={() => setChave((c) => c + 1)} />
+    </div>
+  )
+}
+
 function App() {
   const [view, setView] = useState('operacao') // operacao | login | gestao
+
+  if (MODO_RUPTURA) return <AppRuptura />
 
   return (
     <div className="app-shell">

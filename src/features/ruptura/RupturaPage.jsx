@@ -1,4 +1,3 @@
-import './ruptura.css'
 import { useCallback, useEffect, useState } from 'react'
 import {
   buscarConfig,
@@ -13,16 +12,22 @@ import { formatData, hojeRecife, ordenarProdutos } from './rupturaLib'
 const primeiroSemResposta = (respostas) => respostas.findIndex((x) => x === null)
 
 /** Fluxo do operador: escolhe turno + nome, depois marca Sim/Não item a item. */
-export default function RupturaPage({ onSair }) {
+export default function RupturaPage({ onSair, semVoltar = false }) {
   const [rascunhoAtivo, setRascunhoAtivo] = useState(null)
 
   if (rascunhoAtivo) {
     return <Checagem rascunho={rascunhoAtivo.rascunho} turnoNome={rascunhoAtivo.turnoNome} onSair={onSair} />
   }
-  return <Inicio onSair={onSair} onIniciar={(rascunho, turnoNome) => setRascunhoAtivo({ rascunho, turnoNome })} />
+  return (
+    <Inicio
+      onSair={onSair}
+      semVoltar={semVoltar}
+      onIniciar={(rascunho, turnoNome) => setRascunhoAtivo({ rascunho, turnoNome })}
+    />
+  )
 }
 
-function Inicio({ onIniciar, onSair }) {
+function Inicio({ onIniciar, onSair, semVoltar }) {
   const hoje = hojeRecife()
   const [config, setConfig] = useState(null)
   const [concluidos, setConcluidos] = useState([])
@@ -107,7 +112,7 @@ function Inicio({ onIniciar, onSair }) {
     <div className="card rup-inicio">
       <div className="carrinho-header">
         <h2>Ruptura</h2>
-        <button onClick={onSair}>Voltar</button>
+        {!semVoltar && <button onClick={onSair}>Voltar</button>}
       </div>
 
       {erroCarga ? (
@@ -181,6 +186,26 @@ function Checagem({ rascunho, turnoNome, onSair }) {
   const [cursor, setCursor] = useState(() => Math.max(primeiroSemResposta(rascunho.respostas), 0))
   // 'perguntando' | 'enviando' | 'erro' | 'duplicada' | 'concluida'
   const [fase, setFase] = useState(() => (primeiroSemResposta(rascunho.respostas) === -1 ? 'erro' : 'perguntando'))
+
+  // Mantém a tela acesa enquanto o operador responde (se o aparelho suportar).
+  useEffect(() => {
+    let trava = null
+    let ativo = true
+    async function pedir() {
+      try {
+        if (ativo && document.visibilityState === 'visible') trava = await navigator.wakeLock?.request('screen')
+      } catch {
+        // sem suporte ou negado: segue normal
+      }
+    }
+    pedir()
+    document.addEventListener('visibilitychange', pedir)
+    return () => {
+      ativo = false
+      document.removeEventListener('visibilitychange', pedir)
+      trava?.release().catch(() => {})
+    }
+  }, [])
 
   const total = r.itens.length
   const preenchidos = r.respostas.filter((x) => x !== null).length
