@@ -10,6 +10,9 @@ export default function TipoSelector({ onSelecionar }) {
             {tipo.label}
           </button>
         ))}
+        <button className="tipo-botao tipo-botao-ruptura" onClick={() => onSelecionar('ruptura')}>
+          Ruptura
+        </button>
       </div>
     </div>
   )

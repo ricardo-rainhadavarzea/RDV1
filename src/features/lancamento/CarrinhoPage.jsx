@@ -2,6 +2,7 @@ import { useState } from 'react'
 import TipoSelector from './TipoSelector'
 import EntradaProduto from './EntradaProduto'
 import CarrinhoList from './CarrinhoList'
+import RupturaPage from '../ruptura/RupturaPage'
 import { decodeEtiqueta } from './decodeEtiqueta'
 import { buscarProdutoPorCodigo, salvarMovimentacao, TIPOS } from './lancamentoApi'
 
@@ -123,6 +124,11 @@ export default function CarrinhoPage() {
 
   if (!tipo) {
     return <TipoSelector onSelecionar={setTipo} />
+  }
+
+  // Ruptura não é um lançamento de carrinho: tem fluxo próprio (turno, operador, Sim/Não).
+  if (tipo === 'ruptura') {
+    return <RupturaPage onSair={() => setTipo(null)} />
   }
 
   return (

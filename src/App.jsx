@@ -4,6 +4,7 @@ import CarrinhoPage from './features/lancamento/CarrinhoPage'
 import CancelarLancamentoPage from './features/lancamento/CancelarLancamentoPage'
 import VendasImportPage from './features/vendas/VendasImportPage'
 import IndicadoresPage from './features/indicadores/IndicadoresPage'
+import GestaoRupturaPage from './features/ruptura/GestaoRupturaPage'
 import { formatarISO } from './features/indicadores/periodoUtils'
 import './App.css'
 
@@ -18,6 +19,7 @@ const ABAS_GESTAO = [
   { value: 'produtos', label: 'Produtos' },
   { value: 'vendas', label: 'Vendas Semanais' },
   { value: 'lancamentos', label: 'Lançamentos' },
+  { value: 'ruptura', label: 'Ruptura' },
 ]
 
 function TelaGestao() {
@@ -49,6 +51,7 @@ function TelaGestao() {
       {aba === 'produtos' && <ProdutosPage />}
       {aba === 'vendas' && <VendasImportPage />}
       {aba === 'lancamentos' && <CancelarLancamentoPage periodoInicial={periodoLancamentos} />}
+      {aba === 'ruptura' && <GestaoRupturaPage />}
     </div>
   )
 }
