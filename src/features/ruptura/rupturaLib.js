@@ -21,6 +21,19 @@ export function ordenarProdutos(lista) {
   return [...lista].sort((a, b) => comparar(a.secao, b.secao) || comparar(a.nome, b.nome))
 }
 
+/**
+ * Sequência da checagem definida na Gestão: por `ordem` (1, 2, 3…). Itens sem ordem
+ * (não deveria ocorrer) vão para o fim, em setor/nome A–Z.
+ */
+export function ordenarPorSequencia(lista) {
+  return [...lista].sort((a, b) => {
+    const oa = a.ordem ?? Infinity
+    const ob = b.ordem ?? Infinity
+    if (oa !== ob) return oa < ob ? -1 : 1
+    return comparar(a.secao, b.secao) || comparar(a.nome, b.nome)
+  })
+}
+
 export function indice({ checados, indisp }) {
   return checados === 0 ? null : (indisp / checados) * 100
 }

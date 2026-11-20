@@ -7,7 +7,7 @@ import {
   turnosConcluidos,
 } from './rupturaApi'
 import { carregarRascunho, limparRascunho, salvarRascunho } from './rascunho'
-import { formatData, hojeRecife, ordenarProdutos } from './rupturaLib'
+import { formatData, hojeRecife, ordenarPorSequencia } from './rupturaLib'
 
 const primeiroSemResposta = (respostas) => respostas.findIndex((x) => x === null)
 
@@ -90,7 +90,7 @@ function Inicio({ onIniciar, onSair, semVoltar }) {
         setAviso('Nenhum produto foi selecionado para a ruptura. Peça à Gestão para escolher em Gestão > Ruptura > Produtos.')
         return
       }
-      const itens = ordenarProdutos(produtos)
+      const itens = ordenarPorSequencia(produtos)
       const r = {
         data: hoje,
         turno,

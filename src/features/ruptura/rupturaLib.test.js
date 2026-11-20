@@ -7,6 +7,7 @@ import {
   formatPP,
   indice,
   listarDatas,
+  ordenarPorSequencia,
   ordenarProdutos,
   periodoAnterior,
   porDia,
@@ -114,5 +115,25 @@ describe('Curva A por setor', () => {
     ]
     const r = curvaAPorSetor(vendas, 0.8)
     expect([...r].sort()).toEqual(['a', 'b', 'x'])
+  })
+})
+
+describe('sequência da checagem', () => {
+  it('segue a ordem definida na Gestão, misturando setores', () => {
+    const r = ordenarPorSequencia([
+      { codigo: 'c', nome: 'Coxinha', secao: 'FRITURAS', ordem: 3 },
+      { codigo: 'a', nome: 'Pão', secao: 'PADARIA', ordem: 1 },
+      { codigo: 'b', nome: 'Bolo', secao: 'CONFEITARIA', ordem: 2 },
+      { codigo: 'd', nome: 'Pão Doce', secao: 'PADARIA', ordem: 4 },
+    ])
+    expect(r.map((p) => p.codigo)).toEqual(['a', 'b', 'c', 'd'])
+  })
+  it('itens sem ordem vão para o fim, em setor e nome A–Z', () => {
+    const r = ordenarPorSequencia([
+      { codigo: 'z', nome: 'Zebra', secao: 'PADARIA', ordem: null },
+      { codigo: 'a', nome: 'Alfa', secao: 'PADARIA', ordem: null },
+      { codigo: 'b', nome: 'Bolo', secao: 'CONFEITARIA', ordem: 2 },
+    ])
+    expect(r.map((p) => p.codigo)).toEqual(['b', 'a', 'z'])
   })
 })

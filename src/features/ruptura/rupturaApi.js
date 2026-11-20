@@ -35,12 +35,14 @@ export async function turnosConcluidos(data) {
 
 /** Produtos selecionados para a checagem, com nome e seção do cadastro. */
 export async function listarProdutosDaRuptura() {
-  return buscarTodasLinhas(() => supabase.from('ruptura_lista').select('codigo,nome,secao').order('codigo'))
+  return buscarTodasLinhas(() => supabase.from('ruptura_lista').select('codigo,nome,secao,ordem').order('codigo'))
 }
 
-/** Códigos hoje selecionados (inclui códigos que sumiram do cadastro). */
+/** Códigos hoje selecionados, na sequência da checagem (inclui códigos que sumiram do cadastro). */
 export async function listarCodigosSelecionados() {
-  const rows = await buscarTodasLinhas(() => supabase.from('ruptura_produtos').select('codigo').order('codigo'))
+  const rows = await buscarTodasLinhas(() =>
+    supabase.from('ruptura_produtos').select('codigo,ordem').order('ordem', { nullsFirst: false }).order('codigo')
+  )
   return rows.map((r) => r.codigo)
 }
 
@@ -51,6 +53,7 @@ export async function listarProdutosCandidatos() {
   )
 }
 
+/** Salva a seleção; a posição de cada código no array é a ordem da checagem. */
 export async function salvarSelecao(codigos) {
   const { error } = await supabase.rpc('ruptura_salvar_selecao', { p_codigos: codigos })
   if (error) throw error
