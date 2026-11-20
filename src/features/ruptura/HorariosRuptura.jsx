@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { enviarNotificacaoTeste } from './lembretes'
 import { buscarConfig, salvarConfig } from './rupturaApi'
 
 /** Nome (e hora opcional) dos três turnos da ruptura. */
@@ -6,10 +7,31 @@ export default function HorariosRuptura() {
   const [config, setConfig] = useState(null)
   const [msg, setMsg] = useState(null)
   const [erro, setErro] = useState(null)
+  const [testando, setTestando] = useState(false)
+  const [resultadoTeste, setResultadoTeste] = useState(null)
 
   useEffect(() => {
     buscarConfig().then(setConfig, () => setErro('Não consegui carregar os turnos.'))
   }, [])
+
+  async function enviarTeste() {
+    setResultadoTeste(null)
+    setTestando(true)
+    try {
+      const r = await enviarNotificacaoTeste()
+      setResultadoTeste({
+        ok: r.enviados > 0,
+        texto:
+          r.aparelhos === 0
+            ? 'Nenhum aparelho com lembretes ativados ainda. Peça para tocar em "Ativar lembretes" no app Ruptura.'
+            : `Teste enviado para ${r.enviados} de ${r.aparelhos} aparelho(s).${r.removidos ? ` ${r.removidos} aparelho(s) antigo(s) removido(s).` : ''}${r.falhas?.length ? ` Falhas: ${r.falhas.join('; ')}` : ''}`,
+      })
+    } catch (e) {
+      setResultadoTeste({ ok: false, texto: e.message })
+    } finally {
+      setTestando(false)
+    }
+  }
 
   if (!config) return <div className="card">{erro ? <p className="erro">{erro}</p> : 'Carregando…'}</div>
 
@@ -54,6 +76,18 @@ export default function HorariosRuptura() {
       <button type="submit">Salvar turnos</button>
       {erro && <p className="erro">{erro}</p>}
       {msg && <p className="sucesso">{msg}</p>}
+
+      <hr />
+      <h3>Lembretes no celular</h3>
+      <p className="campo-ajuda">
+        Quem instalou o app Ruptura e tocou em &ldquo;Ativar lembretes&rdquo; recebe um aviso na hora de cada turno acima
+        (só se a checagem daquele turno ainda não foi feita). Mudando a hora do turno, o lembrete muda junto. Turno sem
+        hora não envia lembrete.
+      </p>
+      <button type="button" onClick={enviarTeste} disabled={testando}>
+        {testando ? 'Enviando…' : 'Enviar notificação de teste agora'}
+      </button>
+      {resultadoTeste && <p className={resultadoTeste.ok ? 'sucesso' : 'erro'}>{resultadoTeste.texto}</p>}
     </form>
   )
 }

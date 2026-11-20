@@ -549,3 +549,26 @@ html {
     padding: 6px 4px;
   }
 }
+
+/* ---------- Lembretes (notificação) ---------- */
+
+.rup-lembretes {
+  margin-top: 16px;
+  padding: 12px;
+  border: 1px dashed #adada7;
+  border-radius: 8px;
+  background: #f7f7f5;
+  font-size: 14px;
+}
+
+.rup-lembretes p {
+  margin: 0 0 8px;
+}
+
+.rup-lembretes p:last-child {
+  margin-bottom: 0;
+}
+
+.rup-lembretes button {
+  min-height: 44px;
+}

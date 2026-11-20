@@ -137,3 +137,24 @@ describe('sequência da checagem', () => {
     expect(r.map((p) => p.codigo)).toEqual(['b', 'a', 'z'])
   })
 })
+
+import { naJanela } from './lembreteJanela'
+
+describe('janela do lembrete', () => {
+  it('avisa na hora do turno e até 20 minutos depois', () => {
+    expect(naJanela('09:00', 9 * 60)).toBe(true)
+    expect(naJanela('09:00', 9 * 60 + 20)).toBe(true)
+  })
+  it('não avisa antes da hora nem depois da janela', () => {
+    expect(naJanela('09:00', 9 * 60 - 1)).toBe(false)
+    expect(naJanela('09:00', 9 * 60 + 21)).toBe(false)
+  })
+  it('turno sem hora ou com hora inválida não avisa', () => {
+    expect(naJanela('', 600)).toBe(false)
+    expect(naJanela(null, 600)).toBe(false)
+    expect(naJanela('9h', 600)).toBe(false)
+  })
+  it('aceita hora sem zero à esquerda', () => {
+    expect(naJanela('9:05', 9 * 60 + 5)).toBe(true)
+  })
+})

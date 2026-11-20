@@ -6,6 +6,7 @@ import {
   listarProdutosDaRuptura,
   turnosConcluidos,
 } from './rupturaApi'
+import AtivarLembretes from './AtivarLembretes'
 import { carregarRascunho, limparRascunho, salvarRascunho } from './rascunho'
 import { formatData, hojeRecife, ordenarPorSequencia } from './rupturaLib'
 
@@ -175,6 +176,8 @@ function Inicio({ onIniciar, onSair, semVoltar }) {
           <button className="rup-iniciar" disabled={!pronto || iniciando} onClick={iniciar}>
             {iniciando ? 'Aguarde…' : 'RUPTURA'}
           </button>
+
+          <AtivarLembretes />
         </>
       )}
     </div>
